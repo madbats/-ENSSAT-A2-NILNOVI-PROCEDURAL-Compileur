@@ -23,12 +23,40 @@ class debutProg(CompilationUnite):
 	def stringify(symbols):
 		return "debutProg()"
 		
-class reserver(CompilationUnite):
-	params =""
-	def constructor(self,n):
-		self.params+="#{"+n+"}#"
+class tra(CompilationUnite):
+	params =[]
+	def __init__(self,ad):
+		self.params.append(ad)
 
 	def stringify(self,symbols):
-		self.params.split("#{"))[1].split("}#")[0]
+		unite = "tra("
+		unite += str(symbols[self.params[0]])
+		unite += ")"
 		
-		return 
+		return unite
+
+		
+class tze(CompilationUnite):
+	params =[]
+	def __init__(self,ad):
+		self.params.append(ad)
+
+	def stringify(self,symbols):
+		unite = "tze("
+		unite += str(symbols[self.params[0]])
+		unite += ")"
+		
+		return unite
+
+		
+class erreur(CompilationUnite):
+	params =[]
+	def __init__(self,n):
+		self.params.append(n)
+
+	def stringify(self,symbols):
+		unite = "erreur("
+		unite += str(symbols[self.params[0]])
+		unite += ")"
+		
+		return unite
