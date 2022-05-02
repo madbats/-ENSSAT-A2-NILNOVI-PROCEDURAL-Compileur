@@ -36,7 +36,6 @@ class put(CompilationUnite):
 		return "put()"
 		
 class reserver(CompilationUnite):
-<<<<<<< HEAD
     params =[]
     def __init__(self,n):
         self.params.append(n)
@@ -126,57 +125,7 @@ class div(CompilationUnite):
 
 	def stringify(symbols):
 		return "div()"
-=======
-	params =[]
-	def constructor(self,n):
-		self.params.append(n)
-	
-	def stringify(self,symbols):
-		unite = "reserver("
-		for param in self.params:
-			unite+=str(symbols[param])+","
-		if unite[-1]==",":
-			unite[-1]=")"
-		else:
-			unite+=")"
-		return unite
 
-
-
-class moins(CompilationUnite):
-	params =[]
-	
-	def stringify(self,symbols):
-		unite = "moins()"
-		return unite
-
-class sous(CompilationUnite):
-	params =[]
-	
-	def stringify(self,symbols):
-		unite = "sous()"
-		return unite
-
-class add(CompilationUnite):
-	params =[]
-	
-	def stringify(self,symbols):
-		unite = "add()"
-		return unite
-
-class mult(CompilationUnite):
-	params =[]
-	
-	def stringify(self,symbols):
-		unite = "mult()"
-		return unite
-
-class div(CompilationUnite):
-	params =[]
-	
-	def stringify(self,symbols):
-		unite = "div()"
-		return unite
 #classes supp pour procédural
 
 class empilerAdd(CompilationUnite):
@@ -193,4 +142,3 @@ class empilerAdd(CompilationUnite):
 		else:
 			unite+=")"
 		return unite
->>>>>>> master
