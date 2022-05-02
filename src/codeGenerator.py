@@ -18,62 +18,114 @@ class CompilationUnite(Object):
 	def stringify(symbols):
 		return False
 
+
+
 class debutProg(CompilationUnite):
 
 	def stringify(symbols):
 		return "debutProg()"
+
+class get(CompilationUnite):
+
+	def stringify(symbols):
+		return "get()"
+
+class put(CompilationUnite):
+
+	def stringify(symbols):
+		return "put()"
 		
 class reserver(CompilationUnite):
-	params =[]
-	def constructor(self,n):
-		self.params.append(n)
-	
-	def stringify(self,symbols):
-		unite = "reserver("
-		for param in self.params:
-			unite+=str(symbols[param])+","
-		if unite[-1]==",":
-			unite[-1]=")"
-		else:
-			unite+=")"
-		return unite
+    params =[]
+    def __init__(self,n):
+        self.params.append(n)
+
+    def stringify(self,symbols):
+        unite = "reserver("
+        for param in self.params:
+            unite+=str(symbols[param])+","
+        if unite[-1]==",":
+            unite[-1]=")"
+        else:
+            unite+=")"
+        return unite
+
+
+
+class egal(CompilationUnite):
+
+    def stringify(symbols):
+        return "egal()"
+
+class diff(CompilationUnite):
+
+    def stringify(symbols):
+        return "diff()"
+
+class inf(CompilationUnite):
+
+    def stringify(symbols):
+        return "inf()"
+
+class infeg(CompilationUnite):
+
+    def stringify(symbols):
+        return "infeg()"
+
+class sup(CompilationUnite):
+
+    def stringify(symbols):
+        return "sup()"
+
+class supeg(CompilationUnite):
+
+    def stringify(symbols):
+        return "supeg()"
+
+
+
+class et(CompilationUnite):
+
+    def stringify(symbols):
+        return "et()"
+
+class ou(CompilationUnite):
+
+    def stringify(symbols):
+        return "ou()"
+
+class non(CompilationUnite):
+
+    def stringify(symbols):
+        return "non()"
 
 
 
 class moins(CompilationUnite):
-	params =[]
-	
-	def stringify(self,symbols):
-		unite = "moins()"
-		return unite
+
+	def stringify(symbols):
+		return "moins()"
 
 class sous(CompilationUnite):
-	params =[]
-	
-	def stringify(self,symbols):
-		unite = "sous()"
-		return unite
+
+	def stringify(symbols):
+		return "sous()"
 
 class add(CompilationUnite):
-	params =[]
-	
-	def stringify(self,symbols):
-		unite = "add()"
-		return unite
+
+	def stringify(symbols):
+		return "add()"
 
 class mult(CompilationUnite):
-	params =[]
-	
-	def stringify(self,symbols):
-		unite = "mult()"
-		return unite
+
+	def stringify(symbols):
+		return "mult()"
 
 class div(CompilationUnite):
-	params =[]
-	
-	def stringify(self,symbols):
-		unite = "div()"
-		return unite
+
+	def stringify(symbols):
+		return "div()"
+
 #classes supp pour procédural
 
 class empilerAdd(CompilationUnite):
