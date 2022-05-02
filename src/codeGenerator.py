@@ -1,18 +1,14 @@
 #!/usr/bin/python
 
-from copyreg import constructor
-import sys
-import argparse
-import re
-import logging
-
 class CodeGenerator(Object):
-	symboleTable = []
+	symboleTable = dict()
 	compilationUnits=[]
 
 	def addUnite(self,unite):
 		self.compilationUnits.append(unite)
 	
+	def addSymbole(self,symbol):
+		self.symboleTable[symbol] = self.compilationUnits.count
 
 class CompilationUnite(Object):
 	def stringify(symbols):
@@ -21,6 +17,9 @@ class CompilationUnite(Object):
 
 
 class debutProg(CompilationUnite):
+	params =[]
+	def __init__(self):
+		return
 
 	def stringify(symbols):
 		return "debutProg()"
@@ -35,6 +34,17 @@ class put(CompilationUnite):
 	def stringify(symbols):
 		return "put()"
 		
+
+class finProg(CompilationUnite):
+	params =[]
+	def __init__(self):
+		return
+
+	def stringify(self,symbols):
+		unite = "finProg()"
+		return unite
+
+
 class reserver(CompilationUnite):
     params =[]
     def __init__(self,n):
@@ -188,6 +198,53 @@ class empilerParam(CompilationUnite):
 	
 	def stringify(self,symbols):
 		unite = "empilerParam("
+		for param in self.params:
+			unite+=str(symbols[param])+","
+		if unite[-1]==",":
+			unite[-1]=")"
+		else:
+			unite+=")"
+		return unite
+
+
+class empiler(CompilationUnite):
+	params =[]
+	def __init__(self,val):
+		self.params.append(val)
+
+	def stringify(self,symbols):
+		unite = "empiler("
+		for param in self.params:
+			unite+=str(symbols[param])+","
+		if unite[-1]==",":
+			unite[-1]=")"
+		else:
+			unite+=")"
+		return unite
+
+
+class affectation(CompilationUnite):
+	params =[]
+	def __init__(self,n):
+		self.params.append(n)
+
+	def stringify(self,symbols):
+		unite = "affectation("
+		for param in self.params:
+			unite+=str(symbols[param])+","
+		if unite[-1]==",":
+			unite[-1]=")"
+		else:
+			unite+=")"
+		return unite
+
+class valeurPile(CompilationUnite):
+	params =[]
+	def __init__(self,n):
+		self.params.append(n)
+
+	def stringify(self,symbols):
+		unite = "valeurPile("
 		for param in self.params:
 			unite+=str(symbols[param])+","
 		if unite[-1]==",":
