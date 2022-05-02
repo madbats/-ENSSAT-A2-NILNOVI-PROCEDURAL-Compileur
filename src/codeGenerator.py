@@ -90,3 +90,55 @@ class empilerAdd(CompilationUnite):
 		else:
 			unite+=")"
 		return unite
+
+class reserverBloc(CompilationUnite):
+	params =[]
+	
+	def stringify(self,symbols):
+		unite = "reserverBloc()"
+		return unite
+
+class traStat(CompilationUnite):
+	params =[]
+	def constructor(self,a,nbp):
+		self.params.append(a)
+		self.params.append(nbp)
+	
+	def stringify(self,symbols):
+		unite = "empilerAdd("
+		for param in self.params:
+			unite+=str(symbols[param])+","
+		if unite[-1]==",":
+			unite[-1]=")"
+		else:
+			unite+=")"
+		return unite
+
+class retourFonct(CompilationUnite):
+	params =[]
+	
+	def stringify(self,symbols):
+		unite = "retourFonct()"
+		return unite
+
+class retourProc(CompilationUnite):
+	params =[]
+	
+	def stringify(self,symbols):
+		unite = "retourProc()"
+		return unite
+
+class empilerParam(CompilationUnite):
+	params =[]
+	def constructor(self,ad):
+		self.params.append(ad)
+	
+	def stringify(self,symbols):
+		unite = "empilerParam("
+		for param in self.params:
+			unite+=str(symbols[param])+","
+		if unite[-1]==",":
+			unite[-1]=")"
+		else:
+			unite+=")"
+		return unite
