@@ -321,7 +321,7 @@ class LexicalAnalyser(object):
             try:
                 output_file = open(filename, 'w')
             except:
-                print "Error: can\'t open output file!"
+                print("Error: can\'t open output file!")
                 return
         else:
             output_file = sys.stdout
@@ -340,7 +340,7 @@ class LexicalAnalyser(object):
             try:
                 input_file = open(filename, 'w')
             except:
-                print "Error: can\'t open output file!"
+                print("Error: can\'t open output file!")
                 return
         else:
             input_file = sys.stdint
@@ -530,7 +530,7 @@ def main():
     try:
         f = open(filename, 'r')
     except:
-        print "Error: can\'t open input file!"
+        print("Error: can\'t open input file!")
         return
 
     outputFilename = args.outputfile
