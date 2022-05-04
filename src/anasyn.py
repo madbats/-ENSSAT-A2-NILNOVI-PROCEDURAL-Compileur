@@ -10,9 +10,10 @@ import re
 import logging
 
 import analex
+from codeGenerator import *
 
 logger = logging.getLogger('anasyn')
-
+codeGenerator = CodeGenerator()
 DEBUG = False
 LOGGING_LEVEL = logging.DEBUG
 
@@ -37,17 +38,19 @@ def program(lexical_analyser):
 
 def specifProgPrinc(lexical_analyser):
     lexical_analyser.acceptKeyword("procedure")
+    
     ident = lexical_analyser.acceptIdentifier()
     logger.debug("Name of program : "+ident)
 
 
 def corpsProgPrinc(lexical_analyser):
+    codeGenerator.addUnite(debutProg())
     if not lexical_analyser.isKeyword("begin"):
         logger.debug("Parsing declarations")
+        
         partieDecla(lexical_analyser)
         logger.debug("End of declarations")
     lexical_analyser.acceptKeyword("begin")
-
     if not lexical_analyser.isKeyword("end"):
         logger.debug("Parsing instructions")
         suiteInstr(lexical_analyser)
@@ -55,6 +58,7 @@ def corpsProgPrinc(lexical_analyser):
 
     lexical_analyser.acceptKeyword("end")
     lexical_analyser.acceptFel()
+    codeGenerator.addUnite(finProg())
     logger.debug("End of program")
 
 
