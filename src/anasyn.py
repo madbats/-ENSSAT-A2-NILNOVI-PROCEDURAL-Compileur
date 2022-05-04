@@ -189,6 +189,7 @@ def declaVar(lexical_analyser):
     logger.debug("now parsing type...")
     nnpType(lexical_analyser)
     lexical_analyser.acceptCharacter(";")
+    codeGenerator.addUnite(reserver(1))
 
 
 def listeIdent(lexical_analyser):
@@ -453,6 +454,7 @@ def es(lexical_analyser):
         expression(lexical_analyser)
         lexical_analyser.acceptCharacter(")")
         logger.debug("Call to put")
+        codeGenerator.addUnite(put)
     else:
         logger.error("Unknown E/S instruction!")
         raise AnaSynException("Unknown E/S instruction!")
