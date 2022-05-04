@@ -10,6 +10,9 @@ class CodeGenerator(Object):
 	def addSymbole(self,symbol):
 		self.symboleTable[symbol] = self.compilationUnits.count
 
+	def getCO():
+		return self.compilationUnits.count
+
 class CompilationUnite(Object):
 	def stringify(symbols):
 		return False
@@ -256,26 +259,45 @@ class valeurPile(CompilationUnite):
 
 class tra(CompilationUnite):
 	params =[]
+	
+	# init pour un saut vers un symbol
 	def __init__(self,ad):
+		self.hasSymbol = True
 		self.params.append(ad)
+	
+	# init pour un saut vers un point plus loin dans le code
+	def __init__(self):
+		self.hasSymbol = False
+		self.params[0]=0
 
-   	def stringify(self,symbols):
+	def setAd(self,ad):
+		self.params[0] = ad
+
+	def stringify(self,symbols):
 		unite = "tra("
-		unite += str(symbols[self.params[0]])
+		unite += str(symbols[self.params[0]]) if (self.hasSymbol) else str(self.params[0])
 		unite += ")"
 		
 		return unite
 
 class tze(CompilationUnite):
 	params =[]
+
 	def __init__(self,ad):
+		self.hasSymbol = True
 		self.params.append(ad)
+	
+	def __init__(self):
+		self.hasSymbol = False
+		self.params[0]=0
+
+	def setAd(self,ad):
+		self.params[0] = ad
 
 	def stringify(self,symbols):
 		unite = "tze("
-		unite += str(symbols[self.params[0]])
+		unite += str(symbols[self.params[0]]) if (self.hasSymbol) else str(self.params[0])
 		unite += ")"
-		
 		return unite
 
 		
@@ -290,5 +312,3 @@ class erreur(CompilationUnite):
 		unite += ")"
 		
 		return unite
-		
-		unite = "tra("
