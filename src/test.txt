@@ -1,0 +1,8 @@
+debutProg()
+empiler(14)
+empiler(5)
+sous()
+empiler(4)
+sous()
+put()
+finprog()
