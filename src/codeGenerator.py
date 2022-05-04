@@ -10,7 +10,7 @@ class CodeGenerator(Object):
 	def addSymbole(self,symbol):
 		self.symboleTable[symbol] = self.compilationUnits.count
 
-	def getCO():
+	def getCO(self):
 		return self.compilationUnits.count
 
 class CompilationUnite(Object):

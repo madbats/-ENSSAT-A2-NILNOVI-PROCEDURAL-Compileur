@@ -250,7 +250,8 @@ def listePe(lexical_analyser):
     expression(lexical_analyser)
     if lexical_analyser.isCharacter(","):
         lexical_analyser.acceptCharacter(",")
-        listePe(lexical_analyser)
+        return 1 + listePe(lexical_analyser)
+    return 1
 
 
 def expression(lexical_analyser):
@@ -398,16 +399,19 @@ def elemPrim(lexical_analyser):
         ident = lexical_analyser.acceptIdentifier()
         if lexical_analyser.isCharacter("("):			# Appel fonct
             lexical_analyser.acceptCharacter("(")
+            codeGenerator.addUnite(reserverBloc())
             if not lexical_analyser.isCharacter(")"):
-                listePe(lexical_analyser)
+                nbParam = listePe(lexical_analyser)
 
             lexical_analyser.acceptCharacter(")")
             logger.debug("parsed procedure call")
 
             logger.debug("Call to function: " + ident)
+            codeGenerator.addUnite(traStat(ident, nbParam))
         else:
             logger.debug("Use of an identifier as an expression: " + ident)
-            # ...
+            codeGenerator.addUnite(empiler(ident))
+            codeGenerator.addUnite(valeurPile())
     else:
         logger.error("Unknown Value!")
         raise AnaSynException("Unknown Value!")
@@ -417,6 +421,7 @@ def valeur(lexical_analyser):
     if lexical_analyser.isInteger():
         entier = lexical_analyser.acceptInteger()
         logger.debug("integer value: " + str(entier))
+        codeGenerator.addUnite(empiler(entier))
         return "integer"
     elif lexical_analyser.isKeyword("true") or lexical_analyser.isKeyword("false"):
         vtype = valBool(lexical_analyser)
@@ -430,11 +435,13 @@ def valeur(lexical_analyser):
 def valBool(lexical_analyser):
     if lexical_analyser.isKeyword("true"):
         lexical_analyser.acceptKeyword("true")
+        codeGenerator.addUnite(empiler(1))
         logger.debug("boolean true value")
 
     else:
         logger.debug("boolean false value")
         lexical_analyser.acceptKeyword("false")
+        codeGenerator.addUnite(empiler(0))
 
     return "boolean"
 
