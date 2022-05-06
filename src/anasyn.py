@@ -196,6 +196,9 @@ def listeIdent(lexical_analyser):
     ident = lexical_analyser.acceptIdentifier()
     logger.debug("identifier found: "+str(ident))
 
+    codeGenerator.addUnite(empiler(ident)) ###
+    codeGenerator.addUnite(valeurPile()) ###
+
     if lexical_analyser.isCharacter(","):
         lexical_analyser.acceptCharacter(",")
         listeIdent(lexical_analyser)
@@ -226,8 +229,10 @@ def instr(lexical_analyser):
         ident = lexical_analyser.acceptIdentifier()
         if lexical_analyser.isSymbol(":="):
             # affectation
+            codeGenerator.addUnite(empiler(ident)) ###empiler(ident, true) --> adresse / empiler(ident, false) --> valeur
             lexical_analyser.acceptSymbol(":=")
             expression(lexical_analyser)
+            codeGenerator.addUnite(affectation())
             logger.debug("parsed affectation")
         elif lexical_analyser.isCharacter("("):
             lexical_analyser.acceptCharacter("(")
@@ -251,7 +256,8 @@ def listePe(lexical_analyser):
     expression(lexical_analyser)
     if lexical_analyser.isCharacter(","):
         lexical_analyser.acceptCharacter(",")
-        listePe(lexical_analyser)
+        return 1 + listePe(lexical_analyser)
+    return 1
 
 
 def expression(lexical_analyser):
@@ -261,6 +267,7 @@ def expression(lexical_analyser):
     if lexical_analyser.isKeyword("or"):
         lexical_analyser.acceptKeyword("or")
         exp1(lexical_analyser)
+        codeGenerator.addUnite(ou())
 
 
 def exp1(lexical_analyser):
@@ -270,22 +277,25 @@ def exp1(lexical_analyser):
     if lexical_analyser.isKeyword("and"):
         lexical_analyser.acceptKeyword("and")
         exp2(lexical_analyser)
+        codeGenerator.addUnite(et())
 
 
 def exp2(lexical_analyser):
     logger.debug("parsing exp2")
-
+    op = None
     exp3(lexical_analyser)
     if lexical_analyser.isSymbol("<") or \
             lexical_analyser.isSymbol("<=") or \
             lexical_analyser.isSymbol(">") or \
             lexical_analyser.isSymbol(">="):
-        opRel(lexical_analyser)
+        op = opRel(lexical_analyser)
         exp3(lexical_analyser)
     elif lexical_analyser.isSymbol("=") or \
             lexical_analyser.isSymbol("/="):
-        opRel(lexical_analyser)
+        op = opRel(lexical_analyser)
         exp3(lexical_analyser)
+    if(not(op == None)) :
+        codeGenerator.addUnite(op)
 
 
 def opRel(lexical_analyser):
@@ -294,22 +304,22 @@ def opRel(lexical_analyser):
 
     if lexical_analyser.isSymbol("<"):
         lexical_analyser.acceptSymbol("<")
-
+        return inf()
     elif lexical_analyser.isSymbol("<="):
         lexical_analyser.acceptSymbol("<=")
-
+        return infeg()
     elif lexical_analyser.isSymbol(">"):
         lexical_analyser.acceptSymbol(">")
-
+        return sup()
     elif lexical_analyser.isSymbol(">="):
         lexical_analyser.acceptSymbol(">=")
-
+        return supeg()
     elif lexical_analyser.isSymbol("="):
         lexical_analyser.acceptSymbol("=")
-
+        return egal()
     elif lexical_analyser.isSymbol("/="):
         lexical_analyser.acceptSymbol("/=")
-
+        return diff()
     else:
         msg = "Unknown relationnal operator <" + lexical_analyser.get_value() + ">!"
         logger.error(msg)
@@ -319,19 +329,22 @@ def opRel(lexical_analyser):
 def exp3(lexical_analyser):
     logger.debug("parsing exp3")
     exp4(lexical_analyser)
+    op = None
     if lexical_analyser.isCharacter("+") or lexical_analyser.isCharacter("-"):
-        opAdd(lexical_analyser)
+        op = opAdd(lexical_analyser)
         exp4(lexical_analyser)
+    if(not(op == None)) :
+        codeGenerator.addUnite(op)
 
 
 def opAdd(lexical_analyser):
     logger.debug("parsing additive operator: " + lexical_analyser.get_value())
     if lexical_analyser.isCharacter("+"):
         lexical_analyser.acceptCharacter("+")
-
+        return add()
     elif lexical_analyser.isCharacter("-"):
         lexical_analyser.acceptCharacter("-")
-
+        return sous()
     else:
         msg = "Unknown additive operator <" + lexical_analyser.get_value() + ">!"
         logger.error(msg)
@@ -340,11 +353,13 @@ def opAdd(lexical_analyser):
 
 def exp4(lexical_analyser):
     logger.debug("parsing exp4")
-
+    op = None
     prim(lexical_analyser)
     if lexical_analyser.isCharacter("*") or lexical_analyser.isCharacter("/"):
-        opMult(lexical_analyser)
+        op = opMult(lexical_analyser)
         prim(lexical_analyser)
+    if(not(op == None)) :
+        codeGenerator.addUnite(op)
 
 
 def opMult(lexical_analyser):
@@ -352,10 +367,10 @@ def opMult(lexical_analyser):
                  lexical_analyser.get_value())
     if lexical_analyser.isCharacter("*"):
         lexical_analyser.acceptCharacter("*")
-
+        return mult()
     elif lexical_analyser.isCharacter("/"):
         lexical_analyser.acceptCharacter("/")
-
+        return div()
     else:
         msg = "Unknown multiplicative operator <" + lexical_analyser.get_value() + ">!"
         logger.error(msg)
@@ -364,23 +379,26 @@ def opMult(lexical_analyser):
 
 def prim(lexical_analyser):
     logger.debug("parsing prim")
-
+    op = None
     if lexical_analyser.isCharacter("+") or lexical_analyser.isCharacter("-") or lexical_analyser.isKeyword("not"):
-        opUnaire(lexical_analyser)
+        op = opUnaire(lexical_analyser)
     elemPrim(lexical_analyser)
+    if(not(op == None) ) :
+        codeGenerator.addUnite(op)
 
 
 def opUnaire(lexical_analyser):
     logger.debug("parsing unary operator: " + lexical_analyser.get_value())
     if lexical_analyser.isCharacter("+"):
         lexical_analyser.acceptCharacter("+")
-
+        return None
     elif lexical_analyser.isCharacter("-"):
         lexical_analyser.acceptCharacter("-")
+        return moins()
 
     elif lexical_analyser.isKeyword("not"):
         lexical_analyser.acceptKeyword("not")
-
+        return non()
     else:
         msg = "Unknown additive operator <" + lexical_analyser.get_value() + ">!"
         logger.error(msg)
@@ -399,16 +417,19 @@ def elemPrim(lexical_analyser):
         ident = lexical_analyser.acceptIdentifier()
         if lexical_analyser.isCharacter("("):			# Appel fonct
             lexical_analyser.acceptCharacter("(")
+            codeGenerator.addUnite(reserverBloc())
             if not lexical_analyser.isCharacter(")"):
-                listePe(lexical_analyser)
+                nbParam = listePe(lexical_analyser)
 
             lexical_analyser.acceptCharacter(")")
             logger.debug("parsed procedure call")
-
+            codeGenerator.addUnite(tra(ident))
             logger.debug("Call to function: " + ident)
+            codeGenerator.addUnite(traStat(ident, nbParam))
         else:
             logger.debug("Use of an identifier as an expression: " + ident)
-            # ...
+            codeGenerator.addUnite(empiler(ident))
+            codeGenerator.addUnite(valeurPile())
     else:
         logger.error("Unknown Value!")
         raise AnaSynException("Unknown Value!")
@@ -418,6 +439,7 @@ def valeur(lexical_analyser):
     if lexical_analyser.isInteger():
         entier = lexical_analyser.acceptInteger()
         logger.debug("integer value: " + str(entier))
+        codeGenerator.addUnite(empiler(entier))
         return "integer"
     elif lexical_analyser.isKeyword("true") or lexical_analyser.isKeyword("false"):
         vtype = valBool(lexical_analyser)
@@ -431,11 +453,13 @@ def valeur(lexical_analyser):
 def valBool(lexical_analyser):
     if lexical_analyser.isKeyword("true"):
         lexical_analyser.acceptKeyword("true")
+        codeGenerator.addUnite(empiler(1))
         logger.debug("boolean true value")
 
     else:
         logger.debug("boolean false value")
         lexical_analyser.acceptKeyword("false")
+        codeGenerator.addUnite(empiler(0))
 
     return "boolean"
 
@@ -447,11 +471,14 @@ def es(lexical_analyser):
         lexical_analyser.acceptCharacter("(")
         ident = lexical_analyser.acceptIdentifier()
         lexical_analyser.acceptCharacter(")")
+        codeGenerator.addUnite(empiler(ident,True))
+        codeGenerator.addUnite(get())
         logger.debug("Call to get "+ident)
     elif lexical_analyser.isKeyword("put"):
+        
         lexical_analyser.acceptKeyword("put")
         lexical_analyser.acceptCharacter("(")
-        expression(lexical_analyser)
+        expression(lexical_analyser)        
         lexical_analyser.acceptCharacter(")")
         logger.debug("Call to put")
         codeGenerator.addUnite(put)
@@ -463,29 +490,38 @@ def es(lexical_analyser):
 def boucle(lexical_analyser):
     logger.debug("parsing while loop: ")
     lexical_analyser.acceptKeyword("while")
-
+    ad1 = codeGenerator.getCO()
     expression(lexical_analyser)
-
     lexical_analyser.acceptKeyword("loop")
+    tze1 = tze()
+    codeGenerator.addUnite(tze1)
     suiteInstr(lexical_analyser)
-
     lexical_analyser.acceptKeyword("end")
+    tra1 = tra()
+    codeGenerator.addUnite(tra1)
+    tra1.setAd(ad1)
+    tze.setAd(codeGenerator.getCO())
     logger.debug("end of while loop ")
 
 
 def altern(lexical_analyser):
     logger.debug("parsing if: ")
     lexical_analyser.acceptKeyword("if")
-
+    
     expression(lexical_analyser)
-
+    jump = tze()
+    codeGenerator.addUnite(jump)
     lexical_analyser.acceptKeyword("then")
     suiteInstr(lexical_analyser)
-
     if lexical_analyser.isKeyword("else"):
         lexical_analyser.acceptKeyword("else")
+        jump2 = tra()
+        codeGenerator.addUnite(jump2)
+        jump.setAd(codeGenerator.getCO())
         suiteInstr(lexical_analyser)
-
+        jump=jump2
+    jump.setAd(codeGenerator.getCO())
+    
     lexical_analyser.acceptKeyword("end")
     logger.debug("end of if")
 
