@@ -234,7 +234,7 @@ def inf():
     global ip
     global pile
     
-    if (pile[ip] < pile[ip - 1]):
+    if (pile[ip-1] < pile[ip]):
         pile.pop(ip)
         pile.pop(ip - 1)
         pile.append(1)
@@ -250,7 +250,7 @@ def infeg():
     global ip
     global pile
     
-    if (pile[ip] <= pile[ip - 1]):
+    if (pile[ip - 1]<= pile[ip] ):
         pile.pop(ip)
         pile.pop(ip - 1)
         pile.append(1)
@@ -268,7 +268,7 @@ def sup():
     global ip
     global pile
     
-    if (pile[ip] > pile[ip - 1]):
+    if (pile[ip - 1]>pile[ip]):
         pile.pop(ip)
         pile.pop(ip - 1)
         pile.append(1)
@@ -284,7 +284,7 @@ def supeg():
     global ip
     global pile
     
-    if (pile[ip] >= pile[ip - 1]):
+    if (pile[ip - 1] >= pile[ip ]):
         pile.pop(ip)
         pile.pop(ip - 1)
         pile.append(1)
@@ -300,30 +300,50 @@ def et():
     global ip
     global pile
     
-    pile[ip] = pile[ip] and pile[ip - 1]
+    if (pile[ip - 1] and pile[ip ]):
+        pile.pop(ip)
+        pile.pop(ip - 1)
+        pile.append(1)
+    else:
+        pile.pop(ip)
+        pile.pop(ip - 1)
+        pile.append(0)
+
     ip = ip - 1
-    pile.pop(ip)
     #logger.debug("ip after et= "+ str(ip)+" pile: "+str(pile))
 
 def ou():
     global ip
     global pile
     
-    pile[ip] = pile[ip] or pile[ip - 1]
+    if (pile[ip - 1] or pile[ip ]):
+        pile.pop(ip)
+        pile.pop(ip - 1)
+        pile.append(1)
+    else:
+        pile.pop(ip)
+        pile.pop(ip - 1)
+        pile.append(0)
+
     ip = ip - 1
-    pile.pop(ip)
     #logger.debug("ip after ou= "+ str(ip)+" pile: "+str(pile))
 
 def non():    
     global ip
     global pile
     
-    pile[ip] = not(pile[ip])
+    if (pile[ip] == 0):
+        pile.pop(ip)
+        pile.append(1)
+    else:
+        pile.pop(ip)
+        pile.append(0)
+
     #logger.debug("ip after non= "+ str(ip)+" pile: "+str(pile))
 
 def tra(ad):
     global co
-    co = int(ad)
+    co = int(ad)-1
     #logger.debug("ip after tra= "+ str(ip)+" pile: "+str(pile))
 
 def tze(ad):
@@ -332,9 +352,8 @@ def tze(ad):
     global co
 
     if (pile[ip] == 0):
-        co = int(ad)
-    else:
-        co = co + 1    
+        co = int(ad) -1
+
     ip = ip -1
     pile.pop(ip + 1)
     #logger.debug("ip after tze= "+ str(ip)+" pile: "+str(pile))
