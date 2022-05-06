@@ -1,23 +1,28 @@
 #!/usr/bin/python
 
-class CodeGenerator(Object):
+class CodeGenerator():
 	symboleTable = dict()
 	compilationUnits=[]
 
 	def addUnite(self,unite):
+		print(unite.__class__.__name__)
 		self.compilationUnits.append(unite)
 	
 	def addSymbole(self,symbol):
-		self.symboleTable[symbol] = self.compilationUnits.count
+		self.symboleTable[symbol] = len(self.compilationUnits)
+
+	def getSymboleTable(self):
+		return self.symboleTable
 
 	def getCO(self):
-		return self.compilationUnits.count
+		return len(self.compilationUnits)
 
 	def get_instruction_at_index(self,index):
+		#print(self.compilationUnits[index].__class__.__name__)
 		return self.compilationUnits[index].stringify(self.symboleTable)
 
-class CompilationUnite(Object):
-	def stringify(symbols):
+class CompilationUnite():
+	def stringify(self,symbols):
 		return False
 
 
@@ -27,17 +32,17 @@ class debutProg(CompilationUnite):
 	def __init__(self):
 		return
 
-	def stringify(symbols):
+	def stringify(self,symbols):
 		return "debutProg()"
 
 class get(CompilationUnite):
 
-	def stringify(symbols):
+	def stringify(self,symbols):
 		return "get()"
 
 class put(CompilationUnite):
 
-	def stringify(symbols):
+	def stringify(self,symbols):
 		return "put()"
 		
 
@@ -58,82 +63,82 @@ class reserver(CompilationUnite):
 
 	def stringify(self,symbols):
 		unite = "reserver("
-		unite +=str(symbols[self.params[0]])
+		unite +=str(self.params[0])
 		unite +=")"
 		return unite
 
 class egal(CompilationUnite):
 
-    def stringify(symbols):
+    def stringify(self,symbols):
         return "egal()"
 
 class diff(CompilationUnite):
 
-    def stringify(symbols):
+    def stringify(self,symbols):
         return "diff()"
 
 class inf(CompilationUnite):
 
-    def stringify(symbols):
+    def stringify(self,symbols):
         return "inf()"
 
 class infeg(CompilationUnite):
 
-    def stringify(symbols):
+    def stringify(self,symbols):
         return "infeg()"
 
 class sup(CompilationUnite):
 
-    def stringify(symbols):
+    def stringify(self,symbols):
         return "sup()"
 
 class supeg(CompilationUnite):
 
-    def stringify(symbols):
+    def stringify(self,symbols):
         return "supeg()"
 
 
 
 class et(CompilationUnite):
 
-    def stringify(symbols):
+    def stringify(self,symbols):
         return "et()"
 
 class ou(CompilationUnite):
 
-    def stringify(symbols):
+    def stringify(self,symbols):
         return "ou()"
 
 class non(CompilationUnite):
 
-    def stringify(symbols):
+    def stringify(self,symbols):
         return "non()"
 
 
 
 class moins(CompilationUnite):
 
-	def stringify(symbols):
+	def stringify(self,symbols):
 		return "moins()"
 
 class sous(CompilationUnite):
 
-	def stringify(symbols):
+	def stringify(self,symbols):
 		return "sous()"
 
 class add(CompilationUnite):
 
-	def stringify(symbols):
+	def stringify(self,symbols):
 		return "add()"
 
 class mult(CompilationUnite):
 
-	def stringify(symbols):
+	def stringify(self,symbols):
 		return "mult()"
 
 class div(CompilationUnite):
 
-	def stringify(symbols):
+	def stringify(self,symbols):
 		return "div()"
 
 #classes supp pour procédural
@@ -197,14 +202,19 @@ class empilerParam(CompilationUnite):
 
 
 class empiler(CompilationUnite):
-	params =[]
 	def __init__(self,val,hasSymbol=True):
-		self.params.append(val)
+		self.params = [val]
 		self.hasSymbol = hasSymbol
 
 	def stringify(self,symbols):
 		unite = "empiler("
-		unite += str(symbols[self.params[0]]) if (self.hasSymbol) else str(self.params[0])
+		if(self.hasSymbol):
+			#print("has: "+str(self.params[0])+"->"+str(symbols[self.params[0]]))
+			unite += str(symbols[self.params[0]])
+		else:
+			#print("no: "+str(self.params[0]))
+			#print("->"+str(symbols[self.params[0]]))
+			unite += str(self.params[0])
 		unite+=")"
 		return unite
 
@@ -218,12 +228,10 @@ class affectation(CompilationUnite):
 
 class valeurPile(CompilationUnite):
 	params =[]
-	def __init__(self,n):
-		self.params.append(n)
-
+	
 	def stringify(self,symbols):
 		unite = "valeurPile("
-		unite +=str(symbols[self.params[0]])
+		# unite +=str(symbols[self.params[0]])
 		unite+=")"
 		return unite
 
@@ -237,12 +245,15 @@ class tra(CompilationUnite):
 		self.params.append(ad)
 	
 	# init pour un saut vers un point plus loin dans le code
+	def __init__(self,ad):
+		self.hasSymbol = True
+		self.params=[ad]
+	
 	def __init__(self):
 		self.hasSymbol = False
-		self.params[0]=0
 
 	def setAd(self,ad):
-		self.params[0] = ad
+		self.params = [ad]
 
 	def stringify(self,symbols):
 		unite = "tra("
@@ -256,14 +267,13 @@ class tze(CompilationUnite):
 
 	def __init__(self,ad):
 		self.hasSymbol = True
-		self.params.append(ad)
+		self.params=[ad]
 	
 	def __init__(self):
 		self.hasSymbol = False
-		self.params[0]=0
 
 	def setAd(self,ad):
-		self.params[0] = ad
+		self.params = [ad]
 
 	def stringify(self,symbols):
 		unite = "tze("

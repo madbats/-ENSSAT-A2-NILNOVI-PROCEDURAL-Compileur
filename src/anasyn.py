@@ -189,16 +189,16 @@ def declaVar(lexical_analyser):
     logger.debug("now parsing type...")
     nnpType(lexical_analyser)
     lexical_analyser.acceptCharacter(";")
-    codeGenerator.addUnite(reserver(1))
 
 
 def listeIdent(lexical_analyser):
     ident = lexical_analyser.acceptIdentifier()
     logger.debug("identifier found: "+str(ident))
+    codeGenerator.addSymbole(ident)
+    #codeGenerator.addUnite(empiler(ident)) ###
+    #codeGenerator.addUnite(valeurPile()) ###
 
-    codeGenerator.addUnite(empiler(ident)) ###
-    codeGenerator.addUnite(valeurPile()) ###
-
+    codeGenerator.addUnite(reserver(1))
     if lexical_analyser.isCharacter(","):
         lexical_analyser.acceptCharacter(",")
         listeIdent(lexical_analyser)
@@ -439,7 +439,8 @@ def valeur(lexical_analyser):
     if lexical_analyser.isInteger():
         entier = lexical_analyser.acceptInteger()
         logger.debug("integer value: " + str(entier))
-        codeGenerator.addUnite(empiler(entier))
+        logger.debug("entier:"+str(entier))
+        codeGenerator.addUnite(empiler(entier,False))
         return "integer"
     elif lexical_analyser.isKeyword("true") or lexical_analyser.isKeyword("false"):
         vtype = valBool(lexical_analyser)
@@ -453,13 +454,13 @@ def valeur(lexical_analyser):
 def valBool(lexical_analyser):
     if lexical_analyser.isKeyword("true"):
         lexical_analyser.acceptKeyword("true")
-        codeGenerator.addUnite(empiler(1))
+        codeGenerator.addUnite(empiler(1,False))
         logger.debug("boolean true value")
 
     else:
         logger.debug("boolean false value")
         lexical_analyser.acceptKeyword("false")
-        codeGenerator.addUnite(empiler(0))
+        codeGenerator.addUnite(empiler(0,False))
 
     return "boolean"
 
@@ -481,7 +482,7 @@ def es(lexical_analyser):
         expression(lexical_analyser)        
         lexical_analyser.acceptCharacter(")")
         logger.debug("Call to put")
-        codeGenerator.addUnite(put)
+        codeGenerator.addUnite(put())
     else:
         logger.error("Unknown E/S instruction!")
         raise AnaSynException("Unknown E/S instruction!")
@@ -500,7 +501,7 @@ def boucle(lexical_analyser):
     tra1 = tra()
     codeGenerator.addUnite(tra1)
     tra1.setAd(ad1)
-    tze.setAd(codeGenerator.getCO())
+    tze1.setAd(codeGenerator.getCO())
     logger.debug("end of while loop ")
 
 
@@ -591,7 +592,7 @@ def main():
 
     if args.show_ident_table:
         print("------ IDENTIFIER TABLE ------")
-        # print str(identifierTable)
+        print(str(codeGenerator.getSymboleTable()))
         print("------ END OF IDENTIFIER TABLE ------")
 
     if outputFilename != "":
@@ -604,10 +605,10 @@ def main():
         output_file = sys.stdout
 
     # Outputs the generated code to a file
-    #instrIndex = 0
-    # while instrIndex < codeGenerator.get_instruction_counter():
-    #        output_file.write("%s\n" % str(codeGenerator.get_instruction_at_index(instrIndex)))
-    #        instrIndex += 1
+    instrIndex = 0
+    while instrIndex < codeGenerator.getCO():
+        output_file.write("%s\n" % str(codeGenerator.get_instruction_at_index(instrIndex)))
+        instrIndex += 1
 
     if outputFilename != "":
         output_file.close()
