@@ -347,11 +347,13 @@ def opAdd(lexical_analyser):
 
 def exp4(lexical_analyser):
     logger.debug("parsing exp4")
-
+    op = None
     prim(lexical_analyser)
     if lexical_analyser.isCharacter("*") or lexical_analyser.isCharacter("/"):
-        opMult(lexical_analyser)
+        op = opMult(lexical_analyser)
         prim(lexical_analyser)
+    if(not(op == None)) :
+        codeGenerator.addUnite(op)
 
 
 def opMult(lexical_analyser):
@@ -359,10 +361,10 @@ def opMult(lexical_analyser):
                  lexical_analyser.get_value())
     if lexical_analyser.isCharacter("*"):
         lexical_analyser.acceptCharacter("*")
-
+        return mult()
     elif lexical_analyser.isCharacter("/"):
         lexical_analyser.acceptCharacter("/")
-
+        return div()
     else:
         msg = "Unknown multiplicative operator <" + lexical_analyser.get_value() + ">!"
         logger.error(msg)
@@ -371,7 +373,7 @@ def opMult(lexical_analyser):
 
 def prim(lexical_analyser):
     logger.debug("parsing prim")
-
+    op = None
     if lexical_analyser.isCharacter("+") or lexical_analyser.isCharacter("-") or lexical_analyser.isKeyword("not"):
         op = opUnaire(lexical_analyser)
     elemPrim(lexical_analyser)
@@ -383,14 +385,14 @@ def opUnaire(lexical_analyser):
     logger.debug("parsing unary operator: " + lexical_analyser.get_value())
     if lexical_analyser.isCharacter("+"):
         lexical_analyser.acceptCharacter("+")
-
+        return None
     elif lexical_analyser.isCharacter("-"):
         lexical_analyser.acceptCharacter("-")
         return moins()
 
     elif lexical_analyser.isKeyword("not"):
         lexical_analyser.acceptKeyword("not")
-
+        return non()
     else:
         msg = "Unknown additive operator <" + lexical_analyser.get_value() + ">!"
         logger.error(msg)
