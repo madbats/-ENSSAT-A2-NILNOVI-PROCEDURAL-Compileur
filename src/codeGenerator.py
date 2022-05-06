@@ -13,6 +13,9 @@ class CodeGenerator(Object):
 	def getCO(self):
 		return self.compilationUnits.count
 
+	def get_instruction_at_index(self,index):
+		return self.compilationUnits[index].stringify(self.symboleTable)
+
 class CompilationUnite(Object):
 	def stringify(symbols):
 		return False
@@ -49,21 +52,15 @@ class finProg(CompilationUnite):
 
 
 class reserver(CompilationUnite):
-    params =[]
-    def __init__(self,n):
-        self.params.append(n)
+	params =[]
+	def __init__(self,n):
+		self.params.append(n)
 
-    def stringify(self,symbols):
-        unite = "reserver("
-        for param in self.params:
-            unite+=str(symbols[param])+","
-        if unite[-1]==",":
-            unite[-1]=")"
-        else:
-            unite+=")"
-        return unite
-
-
+	def stringify(self,symbols):
+		unite = "reserver("
+		unite +=str(symbols[self.params[0]])
+		unite +=")"
+		return unite
 
 class egal(CompilationUnite):
 
@@ -148,12 +145,8 @@ class empilerAdd(CompilationUnite):
 	
 	def stringify(self,symbols):
 		unite = "empilerAdd("
-		for param in self.params:
-			unite+=str(symbols[param])+","
-		if unite[-1]==",":
-			unite[-1]=")"
-		else:
-			unite+=")"
+		unite +=str(symbols[self.params[0]])
+		unite+=")"
 		return unite
 
 
@@ -172,12 +165,9 @@ class traStat(CompilationUnite):
 	
 	def stringify(self,symbols):
 		unite = "empilerAdd("
-		for param in self.params:
-			unite+=str(symbols[param])+","
-		if unite[-1]==",":
-			unite[-1]=")"
-		else:
-			unite+=")"
+		unite +=str(symbols[self.params[0]])
+		unite +=str(symbols[self.params[1]])
+		unite+=")"
 		return unite
 
 class retourFonct(CompilationUnite):
@@ -201,28 +191,21 @@ class empilerParam(CompilationUnite):
 	
 	def stringify(self,symbols):
 		unite = "empilerParam("
-		for param in self.params:
-			unite+=str(symbols[param])+","
-		if unite[-1]==",":
-			unite[-1]=")"
-		else:
-			unite+=")"
+		unite +=str(symbols[self.params[0]])
+		unite+=")"
 		return unite
 
 
 class empiler(CompilationUnite):
 	params =[]
-	def __init__(self,val):
+	def __init__(self,val,hasSymbol=True):
 		self.params.append(val)
+		self.hasSymbol = hasSymbol
 
 	def stringify(self,symbols):
 		unite = "empiler("
-		for param in self.params:
-			unite+=str(symbols[param])+","
-		if unite[-1]==",":
-			unite[-1]=")"
-		else:
-			unite+=")"
+		unite += str(symbols[self.params[0]]) if (self.hasSymbol) else str(self.params[0])
+		unite+=")"
 		return unite
 
 
@@ -240,14 +223,10 @@ class valeurPile(CompilationUnite):
 
 	def stringify(self,symbols):
 		unite = "valeurPile("
-		for param in self.params:
-			unite+=str(symbols[param])+","
-		if unite[-1]==",":
-			unite[-1]=")"
-		else:
-			unite+=")"
+		unite +=str(symbols[self.params[0]])
+		unite+=")"
 		return unite
-        
+
 
 class tra(CompilationUnite):
 	params =[]

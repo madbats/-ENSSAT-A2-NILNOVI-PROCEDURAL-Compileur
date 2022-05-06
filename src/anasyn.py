@@ -415,7 +415,7 @@ def elemPrim(lexical_analyser):
 
             lexical_analyser.acceptCharacter(")")
             logger.debug("parsed procedure call")
-
+            codeGenerator.addUnite(tra(ident))
             logger.debug("Call to function: " + ident)
             codeGenerator.addUnite(traStat(ident, nbParam))
         else:
@@ -463,11 +463,14 @@ def es(lexical_analyser):
         lexical_analyser.acceptCharacter("(")
         ident = lexical_analyser.acceptIdentifier()
         lexical_analyser.acceptCharacter(")")
+        codeGenerator.addUnite(empiler(ident,True))
+        codeGenerator.addUnite(get())
         logger.debug("Call to get "+ident)
     elif lexical_analyser.isKeyword("put"):
+        
         lexical_analyser.acceptKeyword("put")
         lexical_analyser.acceptCharacter("(")
-        expression(lexical_analyser)
+        expression(lexical_analyser)        
         lexical_analyser.acceptCharacter(")")
         logger.debug("Call to put")
         codeGenerator.addUnite(put)
@@ -479,29 +482,38 @@ def es(lexical_analyser):
 def boucle(lexical_analyser):
     logger.debug("parsing while loop: ")
     lexical_analyser.acceptKeyword("while")
-
+    ad1 = codeGenerator.getCO()
     expression(lexical_analyser)
-
     lexical_analyser.acceptKeyword("loop")
+    tze1 = tze()
+    codeGenerator.addUnite(tze1)
     suiteInstr(lexical_analyser)
-
     lexical_analyser.acceptKeyword("end")
+    tra1 = tra()
+    codeGenerator.addUnite(tra1)
+    tra1.setAd(ad1)
+    tze.setAd(codeGenerator.getCO())
     logger.debug("end of while loop ")
 
 
 def altern(lexical_analyser):
     logger.debug("parsing if: ")
     lexical_analyser.acceptKeyword("if")
-
+    
     expression(lexical_analyser)
-
+    jump = tze()
+    codeGenerator.addUnite(jump)
     lexical_analyser.acceptKeyword("then")
     suiteInstr(lexical_analyser)
-
     if lexical_analyser.isKeyword("else"):
         lexical_analyser.acceptKeyword("else")
+        jump2 = tra()
+        codeGenerator.addUnite(jump2)
+        jump.setAd(codeGenerator.getCO())
         suiteInstr(lexical_analyser)
-
+        jump=jump2
+    jump.setAd(codeGenerator.getCO())
+    
     lexical_analyser.acceptKeyword("end")
     logger.debug("end of if")
 
