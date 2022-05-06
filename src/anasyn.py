@@ -280,18 +280,20 @@ def exp1(lexical_analyser):
 
 def exp2(lexical_analyser):
     logger.debug("parsing exp2")
-
+    op = None
     exp3(lexical_analyser)
     if lexical_analyser.isSymbol("<") or \
             lexical_analyser.isSymbol("<=") or \
             lexical_analyser.isSymbol(">") or \
             lexical_analyser.isSymbol(">="):
-        opRel(lexical_analyser)
+        op = opRel(lexical_analyser)
         exp3(lexical_analyser)
     elif lexical_analyser.isSymbol("=") or \
             lexical_analyser.isSymbol("/="):
-        opRel(lexical_analyser)
+        op = opRel(lexical_analyser)
         exp3(lexical_analyser)
+    if(not(op == None)) :
+        codeGenerator.addUnite(op)
 
 
 def opRel(lexical_analyser):
@@ -300,22 +302,22 @@ def opRel(lexical_analyser):
 
     if lexical_analyser.isSymbol("<"):
         lexical_analyser.acceptSymbol("<")
-
+        return inf()
     elif lexical_analyser.isSymbol("<="):
         lexical_analyser.acceptSymbol("<=")
-
+        return infeg()
     elif lexical_analyser.isSymbol(">"):
         lexical_analyser.acceptSymbol(">")
-
+        return sup()
     elif lexical_analyser.isSymbol(">="):
         lexical_analyser.acceptSymbol(">=")
-
+        return supeg()
     elif lexical_analyser.isSymbol("="):
         lexical_analyser.acceptSymbol("=")
-
+        return egal()
     elif lexical_analyser.isSymbol("/="):
         lexical_analyser.acceptSymbol("/=")
-
+        return diff()
     else:
         msg = "Unknown relationnal operator <" + lexical_analyser.get_value() + ">!"
         logger.error(msg)
