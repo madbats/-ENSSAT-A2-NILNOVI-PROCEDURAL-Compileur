@@ -267,6 +267,7 @@ def expression(lexical_analyser):
     if lexical_analyser.isKeyword("or"):
         lexical_analyser.acceptKeyword("or")
         exp1(lexical_analyser)
+        codeGenerator.addUnite(ou())
 
 
 def exp1(lexical_analyser):
@@ -276,6 +277,7 @@ def exp1(lexical_analyser):
     if lexical_analyser.isKeyword("and"):
         lexical_analyser.acceptKeyword("and")
         exp2(lexical_analyser)
+        codeGenerator.addUnite(et())
 
 
 def exp2(lexical_analyser):
