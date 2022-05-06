@@ -325,20 +325,22 @@ def opRel(lexical_analyser):
 def exp3(lexical_analyser):
     logger.debug("parsing exp3")
     exp4(lexical_analyser)
+    op = None
     if lexical_analyser.isCharacter("+") or lexical_analyser.isCharacter("-"):
-        opAdd(lexical_analyser)
+        op = opAdd(lexical_analyser)
         exp4(lexical_analyser)
+    if(not(op == None)) :
+        codeGenerator.addUnite(op)
 
 
 def opAdd(lexical_analyser):
     logger.debug("parsing additive operator: " + lexical_analyser.get_value())
     if lexical_analyser.isCharacter("+"):
         lexical_analyser.acceptCharacter("+")
-        codeGenerator.addUnite(add())
-
+        return add()
     elif lexical_analyser.isCharacter("-"):
         lexical_analyser.acceptCharacter("-")
-
+        return sous()
     else:
         msg = "Unknown additive operator <" + lexical_analyser.get_value() + ">!"
         logger.error(msg)
