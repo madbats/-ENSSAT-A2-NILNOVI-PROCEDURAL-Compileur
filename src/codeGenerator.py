@@ -5,7 +5,7 @@ class CodeGenerator():
 	compilationUnits=[]
 
 	def addUnite(self,unite):
-		print(unite.__class__.__name__)
+		#print(unite.__class__.__name__)
 		self.compilationUnits.append(unite)
 	
 	def addSymbole(self,symbol):
