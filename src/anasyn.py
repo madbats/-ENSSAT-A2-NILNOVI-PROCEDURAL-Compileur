@@ -194,7 +194,7 @@ def declaVar(lexical_analyser):
 def listeIdent(lexical_analyser):
     ident = lexical_analyser.acceptIdentifier()
     logger.debug("identifier found: "+str(ident))
-    codeGenerator.addSymbole(ident)
+    codeGenerator.addVariable(ident)
     #codeGenerator.addUnite(empiler(ident)) ###
     #codeGenerator.addUnite(valeurPile()) ###
 

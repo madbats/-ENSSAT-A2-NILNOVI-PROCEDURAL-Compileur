@@ -3,11 +3,16 @@
 class CodeGenerator():
 	symboleTable = dict()
 	compilationUnits=[]
+	compteurVariable = 1
 
 	def addUnite(self,unite):
 		#print(unite.__class__.__name__)
 		self.compilationUnits.append(unite)
 	
+	def addVariable(self,symbol):
+		self.symboleTable[symbol] = self.compteurVariable
+		self.compteurVariable+=1
+		
 	def addSymbole(self,symbol):
 		self.symboleTable[symbol] = len(self.compilationUnits)
 
