@@ -26,13 +26,13 @@ def debutProg():
     base = 0
     ip = 0
 
-    logger.debug("debutProg, ip = "+ str(ip))
+    #logger.debug("debutProg, ip = "+ str(ip))
 
 
 def reserver(n):
     global ip
 
-    logger.debug("ip before reserver = "+ str(ip))
+    #logger.debug("ip before reserver = "+ str(ip))
 
     if (int(n) > 0):
         i = 0
@@ -41,73 +41,78 @@ def reserver(n):
             pile.append(0)
             i = i + 1
 
-    logger.debug("ip after reserver = "+ str(ip))
+    #logger.debug("ip after reserver = "+ str(ip)+" pile: "+str(pile))
 
 def empiler(val):
     global ip
     global pile
 
-    logger.debug("ip before empiler = "+ str(ip))
+    #logger.debug("ip before empiler = "+ str(ip))
     pile.append(int(val))
     ip = ip + 1
-    logger.debug("empiler"+val)
-    logger.debug("ip after empiler = "+ str(ip))
+    #logger.debug("empiler "+val)
+    #logger.debug("ip after empiler = "+ str(ip)+" pile: "+str(pile))
 
 def affectation():
     global pile
     global ip
 
-    logger.debug("ip before affectation = "+ str(ip))
+    #logger.debug("ip before affectation = "+ str(ip))
     index = int(pile[ip-1])
-    logger.debug("val index: "+ str(index))
+    #logger.debug("val index: "+ str(index))
     pile[index] = int(pile[ip])
-    logger.debug("val pile["+ str(index)+"]: "+ str(pile[index]))
+    #logger.debug("val pile["+ str(index)+"]: "+ str(pile[index]))
     pile.pop(ip)
     pile.pop(ip-1)
     ip = ip - 2
-    logger.debug("ip after affectation= "+ str(ip))
+    #logger.debug("ip after affectation= "+ str(ip)+" pile: "+str(pile))
 
 def valeurPile():
     global pile
     global ip
 
-    logger.debug("ip before valeurPile= "+ str(ip))
+    #logger.debug("ip before valeurPile= "+ str(ip))
     index = int(pile[ip])
-    logger.debug("val index: "+ str(index))
+    #logger.debug("val index: "+ str(index))
     pile[ip] = int(pile[index])
-    logger.debug("val pile["+ str(index)+"]: "+str(pile[ip]))
-    logger.debug("ip after valeurPile= "+ str(ip))
+    #logger.debug("val pile["+ str(index)+"]: "+str(pile[ip]))
+    #logger.debug("ip after valeurPile= "+ str(ip)+" pile: "+str(pile))
 
 def get():
     global ip
     global pile
 
-    logger.debug("ip before get= "+ str(ip))
+    #logger.debug("ip before get= "+ str(ip))
+    print("? ",end='')
     val = input()
-    if(isinstance(val, int)):
+    try :
+        val = int(val)
         index = pile[ip]
         ip = ip - 1
         pile[index] = val
         pile.pop(ip + 1)
+        #logger.debug("Got %d with ip %d and placed in index %d pile is now %s",val,ip,index,str(pile))
+    except ValueError:
+        print("\033[91mERROR\033[0m: Integer expected \033[91m"+str(val)+"\033[0m given")
+        erreur()
 
-    logger.debug("ip after get= "+ str(ip))
+    #logger.debug("ip after get= "+ str(ip)+" pile: "+str(pile))
 
 def put():
     global ip
     global pile
-
-    logger.debug("ip before put= "+ str(ip))
-    logger.debug('\033[92m'+pile[ip]+ '\033[0m')
+    #logger.debug("ip before put= "+ str(ip))
+    print("> \033[92m"+str(pile[ip])+ "\033[0m")
     ip = ip - 1
-    logger.debug("ip after put= "+ str(ip))
+    #logger.debug("ip after put= "+ str(ip)+" pile: "+str(pile))
 
 def moins():
     global ip
     global pile
 
-    logger.debug("ip before moins = "+ str(ip))
+    #logger.debug("ip before moins = "+ str(ip))
     pile[ip] = pile[ip] * (-1)
-    logger.debug("ip after moins = "+ str(ip))
+    #logger.debug("ip after moins = "+ str(ip)+" pile: "+str(pile))
 
 def sous():
     global ip
@@ -117,17 +122,17 @@ def sous():
     #pile[ip] = pile[ip] - pile[ip + 1]
     #pile.pop(ip+1)
 
-    logger.debug("ip before sous= "+ str(ip))
+    #logger.debug("ip before sous= "+ str(ip))
     var1 = int(pile[ip - 1])
     var2 = int(pile[ip])
     res = var1 - var2
-    logger.debug(int(var1)+"-"+int(var2)+"="+int(res))
+    logger.debug("calcule "+str(var1)+"-"+str(var2)+"="+str(res))
     pile.pop(ip)
     pile.pop(ip - 1)
     pile.append(int(res))
 
     ip = ip - 1
-    logger.debug("ip after sous = "+ str(ip))
+    #logger.debug("ip after sous = "+ str(ip)+" pile: "+str(pile))
 
 def add():
     global ip
@@ -137,17 +142,17 @@ def add():
     # pile[ip] = pile[ip] + pile[ip + 1]
     # pile.pop(ip+1)
 
-    logger.debug("ip before add = "+ str(ip))
+    #logger.debug("ip before add = "+ str(ip))
     var1 = int(pile[ip - 1])
     var2 = int(pile[ip])
     res = var1 + var2
-    logger.debug(int(var1)+"+"+int(var2)+"="+int(res))
+    logger.debug("calcule "+str(var1)+"+"+str(var2)+"="+str(res))
     pile.pop(ip)
     pile.pop(ip - 1)
     pile.append(int(res))
 
     ip = ip - 1
-    logger.debug("ip after add = "+ str(ip))
+    #logger.debug("ip after add = "+ str(ip)+" pile: "+str(pile))
 
 def mult():
     global ip
@@ -157,37 +162,38 @@ def mult():
     # pile[ip] = pile[ip] * pile[ip + 1]
     # pile.pop(ip+1)
 
-    logger.debug("ip before mult = "+ str(ip))
+    #logger.debug("ip before mult = "+ str(ip))
     var1 = int(pile[ip - 1])
     var2 = int(pile[ip])
     res = var1 * var2
-    logger.debug(int(var1)+"*"+int(var2)+"="+int(res))
+    logger.debug("calcule "+str(var1)+"*"+str(var2)+"="+str(res))
     pile.pop(ip)
     pile.pop(ip - 1)
     pile.append(int(res))
 
     ip = ip - 1
-    logger.debug("ip after mult = "+ str(ip))
+    #logger.debug("ip after mult = "+ str(ip)+" pile: "+str(pile))
 
 def div():
     global ip
     global pile
     
-    logger.debug("ip before div= "+ str(ip))
+    #logger.debug("ip before div= "+ str(ip))
     var1 = pile[ip - 1]
     var2 = pile[ip]
 
     if var2 != 0:
         res = var1 / var2
-        logger.debug(int(var1)+"/"+int(var2)+"="+int(res))
+        logger.debug("calcule "+str(var1)+"/"+str(var2)+"="+str(res))
         pile.pop(ip)
         pile.pop(ip - 1)
         pile.append(int(res))
-        logger.debug("ip after div = "+ str(ip))
+        #logger.debug("ip after div = "+ str(ip)+" pile: "+str(pile))
     else:
+        print("\033[91mERROR\033[0m: Dividing \033[91m%d by 0\033[0m")
         erreur()
 
-    # ip = ip - 1
+    ip = ip - 1
     # if(pile[ip + 1] != 0):
     #     pile[ip] = pile[ip] / pile[ip + 1]
     # pile.pop(ip+1)
@@ -206,6 +212,7 @@ def egal():
         pile.append(0)
 
     ip = ip - 1
+    #logger.debug("ip after egal= "+ str(ip)+" pile: "+str(pile))
 
 def diff():
     global ip
@@ -221,6 +228,7 @@ def diff():
         pile.append(0)
 
     ip = ip - 1
+    #logger.debug("ip after diff= "+ str(ip)+" pile: "+str(pile))
 
 def inf():
     global ip
@@ -236,6 +244,7 @@ def inf():
         pile.append(0)
 
     ip = ip - 1
+    #logger.debug("ip after inf= "+ str(ip)+" pile: "+str(pile))
 
 def infeg():
     global ip
@@ -245,12 +254,15 @@ def infeg():
         pile.pop(ip)
         pile.pop(ip - 1)
         pile.append(1)
+        #logger.debug("True")
     else:
         pile.pop(ip)
         pile.pop(ip - 1)
         pile.append(0)
+        #logger.debug("False")
 
     ip = ip - 1
+    #logger.debug("ip after infeg= "+ str(ip)+" pile: "+str(pile))
 
 def sup():
     global ip
@@ -266,6 +278,7 @@ def sup():
         pile.append(0)
 
     ip = ip - 1
+    #logger.debug("ip after sup= "+ str(ip)+" pile: "+str(pile))
 
 def supeg():
     global ip
@@ -281,6 +294,7 @@ def supeg():
         pile.append(0)
 
     ip = ip - 1
+    #logger.debug("ip after supeg= "+ str(ip)+" pile: "+str(pile))
 
 def et():
     global ip
@@ -289,6 +303,7 @@ def et():
     pile[ip] = pile[ip] and pile[ip - 1]
     ip = ip - 1
     pile.pop(ip)
+    #logger.debug("ip after et= "+ str(ip)+" pile: "+str(pile))
 
 def ou():
     global ip
@@ -297,16 +312,19 @@ def ou():
     pile[ip] = pile[ip] or pile[ip - 1]
     ip = ip - 1
     pile.pop(ip)
+    #logger.debug("ip after ou= "+ str(ip)+" pile: "+str(pile))
 
 def non():    
     global ip
     global pile
     
     pile[ip] = not(pile[ip])
+    #logger.debug("ip after non= "+ str(ip)+" pile: "+str(pile))
 
 def tra(ad):
     global co
     co = int(ad)
+    #logger.debug("ip after tra= "+ str(ip)+" pile: "+str(pile))
 
 def tze(ad):
     global ip
@@ -319,18 +337,19 @@ def tze(ad):
         co = co + 1    
     ip = ip -1
     pile.pop(ip + 1)
+    #logger.debug("ip after tze= "+ str(ip)+" pile: "+str(pile))
 
 def erreur():
-    logger.debug("Erreur")
+    #logger.debug("Erreur")
 
-    return -1
+    exit(-1)
 
 def finProg():
     global stack
 
     stack.close()
     
-    return 0
+    exit(0)
 
 ####### Programme principal
 def main():
@@ -356,15 +375,19 @@ def main():
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     ch.setFormatter(formatter)
     logger.addHandler(ch)
-
+    i=0
     for line in file:
-        stack.append(line)
-
+        logger.debug("%d\t"+line.split(")")[0]+")",i)
+        stack.append(line.split(")")[0]+")")
+        i+=1
+    
     while co < len(stack) - 1:
         s = stack[co]
         func = s.split("(")[0]
         param = (s.split("(")[1]).split(")")[0]
-
+        
+        logger.debug("\033[93mip: \033[93m%s\033[0m - \033[94m%s\033[0m",str(ip),str(pile))
+        logger.debug("\033[95mco: %d\033[0m - \033[96m"+s+"\033[0m",co)
         match func:
             case "debutProg":
                 debutProg()
