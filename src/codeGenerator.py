@@ -228,17 +228,9 @@ class empiler(CompilationUnite):
 
 class affectation(CompilationUnite):
 	params =[]
-	def __init__(self,n):
-		self.params.append(n)
 
 	def stringify(self,symbols):
-		unite = "affectation("
-		for param in self.params:
-			unite+=str(symbols[param])+","
-		if unite[-1]==",":
-			unite[-1]=")"
-		else:
-			unite+=")"
+		unite = "affectation()"
 		return unite
 
 class valeurPile(CompilationUnite):

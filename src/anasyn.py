@@ -196,6 +196,9 @@ def listeIdent(lexical_analyser):
     ident = lexical_analyser.acceptIdentifier()
     logger.debug("identifier found: "+str(ident))
 
+    codeGenerator.addUnite(empiler(ident)) ###
+    codeGenerator.addUnite(valeurPile()) ###
+
     if lexical_analyser.isCharacter(","):
         lexical_analyser.acceptCharacter(",")
         listeIdent(lexical_analyser)
@@ -226,8 +229,10 @@ def instr(lexical_analyser):
         ident = lexical_analyser.acceptIdentifier()
         if lexical_analyser.isSymbol(":="):
             # affectation
+            codeGenerator.addUnite(empiler(ident)) ###empiler(ident, true) --> adresse / empiler(ident, false) --> valeur
             lexical_analyser.acceptSymbol(":=")
             expression(lexical_analyser)
+            codeGenerator.addUnite(affectation())
             logger.debug("parsed affectation")
         elif lexical_analyser.isCharacter("("):
             lexical_analyser.acceptCharacter("(")
@@ -329,6 +334,7 @@ def opAdd(lexical_analyser):
     logger.debug("parsing additive operator: " + lexical_analyser.get_value())
     if lexical_analyser.isCharacter("+"):
         lexical_analyser.acceptCharacter("+")
+        codeGenerator.addUnite(add())
 
     elif lexical_analyser.isCharacter("-"):
         lexical_analyser.acceptCharacter("-")
@@ -367,8 +373,10 @@ def prim(lexical_analyser):
     logger.debug("parsing prim")
 
     if lexical_analyser.isCharacter("+") or lexical_analyser.isCharacter("-") or lexical_analyser.isKeyword("not"):
-        opUnaire(lexical_analyser)
+        op = opUnaire(lexical_analyser)
     elemPrim(lexical_analyser)
+    if(not(op == None) ) :
+        codeGenerator.addUnite(op)
 
 
 def opUnaire(lexical_analyser):
@@ -378,6 +386,7 @@ def opUnaire(lexical_analyser):
 
     elif lexical_analyser.isCharacter("-"):
         lexical_analyser.acceptCharacter("-")
+        return moins()
 
     elif lexical_analyser.isKeyword("not"):
         lexical_analyser.acceptKeyword("not")
