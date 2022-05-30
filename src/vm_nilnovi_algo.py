@@ -23,8 +23,9 @@ def debutProg():
 
     pile = []
     pile.append(0)
+    pile.append(0)
     base = 0
-    ip = 0
+    ip = 1
 
     #logger.debug("debutProg, ip = "+ str(ip))
 
@@ -57,15 +58,15 @@ def affectation():
     global pile
     global ip
 
-    #logger.debug("ip before affectation = "+ str(ip))
+    logger.debug("ip before affectation = "+ str(ip))
     index = int(pile[ip-1])
-    #logger.debug("val index: "+ str(index))
+    logger.debug("val index: "+ str(index))
     pile[index] = int(pile[ip])
-    #logger.debug("val pile["+ str(index)+"]: "+ str(pile[index]))
+    logger.debug("val pile["+ str(index)+"]: "+ str(pile[index]))
     pile.pop(ip)
     pile.pop(ip-1)
     ip = ip - 2
-    #logger.debug("ip after affectation= "+ str(ip)+" pile: "+str(pile))
+    logger.debug("ip after affectation= "+ str(ip)+" pile: "+str(pile))
 
 def valeurPile():
     global pile
@@ -103,6 +104,7 @@ def put():
     global pile
     #logger.debug("ip before put= "+ str(ip))
     print("> \033[92m"+str(pile[ip])+ "\033[0m")
+    pile.pop(ip)
     ip = ip - 1
     #logger.debug("ip after put= "+ str(ip)+" pile: "+str(pile))
 
@@ -284,7 +286,7 @@ def supeg():
     global ip
     global pile
     
-    if (pile[ip - 1] >= pile[ip ]):
+    if (pile[ip - 1] >= pile[ip]):
         pile.pop(ip)
         pile.pop(ip - 1)
         pile.append(1)
@@ -300,7 +302,7 @@ def et():
     global ip
     global pile
     
-    if (pile[ip - 1] and pile[ip ]):
+    if (pile[ip - 1] and pile[ip]):
         pile.pop(ip)
         pile.pop(ip - 1)
         pile.append(1)
@@ -343,8 +345,11 @@ def non():
 
 def tra(ad):
     global co
-    co = int(ad)-1
-    #logger.debug("ip after tra= "+ str(ip)+" pile: "+str(pile))
+
+    logger.debug("co before tra= " + str(co))
+    co = int(ad) - 2
+    logger.debug("ip after tra= "+ str(ip)+" pile: "+str(pile))
+    logger.debug("co after tra= " + str(co))
 
 def tze(ad):
     global ip
@@ -352,11 +357,98 @@ def tze(ad):
     global co
 
     if (pile[ip] == 0):
-        co = int(ad) -1
+        co = int(ad) -2
 
-    ip = ip -1
+    ip = ip - 1
     pile.pop(ip + 1)
-    #logger.debug("ip after tze= "+ str(ip)+" pile: "+str(pile))
+    logger.debug("ip after tze= "+ str(ip)+" pile: "+str(pile))
+
+
+def empilerAd(ad):
+    global pile
+    global ip
+    global base
+
+    logger.debug("ip before empilerAd = " + str(ip))
+    pile.append(base + 2 + int(ad))
+    ip = ip + 1
+
+    logger.debug("empilerAd " + str(base + 2 + int(ad)))
+    logger.debug("ip after empilerAd = "+ str(ip)+" pile: "+str(pile))
+
+def reserverBloc():
+    global ip
+    global pile
+    global base
+
+    logger.debug("ip before reserverBloc = " + str(ip))
+    pile.append(base)
+    pile.append(0)
+    ip = ip + 2
+    logger.debug("ip after reserverBloc = " + str(ip) + " pile: "+str(pile))
+
+def traStat(a, nbp):
+    global ip
+    global pile
+    global base
+    global co
+
+    logger.debug("ip before traStat = " + str(ip))
+    logger.debug("base before traStat = " + str(base))
+    base = ip - int(nbp) - 1
+    pile[base + 1] = co + 1
+    co = int(a) - 2
+    logger.debug("ip after traStat = " + str(ip) +  " pile: "+str(pile))
+    logger.debug("base after traStat = " + str(base))
+
+def retourFonct():
+    global ip
+    global pile
+    global base
+    global co
+
+    logger.debug("ip before retourFonct = " + str(ip))
+    co = pile[base + 1] - 1
+    valRetour = pile[ip]
+
+    while (ip > base):
+        pile.pop(ip)
+        ip = ip - 1
+
+    base = pile[base]
+    pile.pop(ip)
+    pile.append(valRetour)
+    logger.debug("valRetour = " + str(valRetour))
+    logger.debug("ip after retourFonct = " + str(ip) +  " pile: "+str(pile))
+    logger.debug("co after retourFonct = " + str(co))
+
+def retourProc():
+    global ip
+    global pile
+    global base
+    global co
+
+    logger.debug("ip before retourProc = " + str(ip))
+    co = pile[base + 1]
+
+    while (ip > base):
+        pile.pop(ip)
+        ip = ip - 1
+
+    base = pile[base]
+    pile.pop(ip)
+    ip = ip - 1
+    logger.debug("ip after retourProc = " + str(ip) +  " pile: "+str(pile))
+
+def empilerParam(ad):
+    global ip
+    global pile
+    global base
+
+    logger.debug("ip before empilerParam = " + str(ip))
+    pile.append(pile[base + 1 + int(ad)])
+    ip = ip + 1
+    logger.debug("ip after empilerParam = " + str(ip) +  " pile: "+str(pile))
 
 def erreur():
     #logger.debug("Erreur")
@@ -454,6 +546,20 @@ def main():
                 tra(param)
             case "tze":
                 tze(param)
+            case "empilerAd":
+                empilerAd(param)
+            case "reserverBloc":
+                reserverBloc()
+            case "traStat":
+                a = param.split(",")[0]
+                nbp = param.split(",")[1]
+                traStat(a, nbp)
+            case "retourFonct":
+                retourFonct()
+            case "retourProc":
+                retourProc()
+            case "empilerParam":
+                empilerParam(param)
             case "finProg":
                 finProg()
             case _:
