@@ -48,9 +48,14 @@ def corpsProgPrinc(lexical_analyser):
     if not lexical_analyser.isKeyword("begin"):
         logger.debug("Parsing declarations")
         
+        
         partieDecla(lexical_analyser)
         logger.debug("End of declarations")
     lexical_analyser.acceptKeyword("begin")
+
+    
+
+
     if not lexical_analyser.isKeyword("end"):
         logger.debug("Parsing instructions")
         suiteInstr(lexical_analyser)
@@ -64,7 +69,10 @@ def corpsProgPrinc(lexical_analyser):
 
 def partieDecla(lexical_analyser):
     if lexical_analyser.isKeyword("procedure") or lexical_analyser.isKeyword("function"):
+        tra1 = tra()
+        codeGenerator.addUnite(tra1)
         listeDeclaOp(lexical_analyser)
+        tra1.setAd(codeGenerator.getCO)
         if not lexical_analyser.isKeyword("begin"):
             listeDeclaVar(lexical_analyser)
 
