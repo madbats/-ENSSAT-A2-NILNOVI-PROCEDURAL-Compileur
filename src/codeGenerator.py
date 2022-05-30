@@ -148,13 +148,13 @@ class div(CompilationUnite):
 
 #classes supp pour procédural
 
-class empilerAdd(CompilationUnite):
+class empilerAd(CompilationUnite):
 	params =[]
 	def constructor(self,n):
 		self.params.append(n)
 	
 	def stringify(self,symbols):
-		unite = "empilerAdd("
+		unite = "empilerAd("
 		unite +=str(symbols[self.params[0]])
 		unite+=")"
 		return unite
@@ -174,7 +174,7 @@ class traStat(CompilationUnite):
 		self.params.append(nbp)
 	
 	def stringify(self,symbols):
-		unite = "empilerAdd("
+		unite = "empilerAd("
 		unite +=str(symbols[self.params[0]])
 		unite +=str(symbols[self.params[1]])
 		unite+=")"
