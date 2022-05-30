@@ -1,23 +1,57 @@
 #!/usr/bin/python
 
+class Symbole():
+	adresse = 0
+
+	bool = False
+
+	def __init__(self,ident,adresse):
+		self.ident = ident
+		self.adresse = adresse
+
+	def setBool(self,val):
+		self.bool = val
+
+	def isBool(self):
+		return self.bool
+	
+	def isInteger(self):
+		return not self.bool
+	
+	def getAdresse(self):
+		return self.adresse
+
+	def getIdent(self):
+		return self.ident
+
 class CodeGenerator():
 	symboleTable = dict()
 	compilationUnits=[]
 	compteurVariable = 1
+
+	listeIdent = []
 
 	def addUnite(self,unite):
 		#print(unite.__class__.__name__)
 		self.compilationUnits.append(unite)
 	
 	def addVariable(self,symbol):
-		self.symboleTable[symbol] = self.compteurVariable
+		self.listeIdent.append(Symbole(symbol,self.compteurVariable))
 		self.compteurVariable+=1
-		
+	
+	def setType(self,isBool=False):
+		for sym in self.listeIdent:
+			sym.setBool(isBool)
+			self.symboleTable[sym.getIdent()] = sym
+
 	def addSymbole(self,symbol):
 		self.symboleTable[symbol] = len(self.compilationUnits)
 
 	def getSymboleTable(self):
 		return self.symboleTable
+
+	def isSymbolTypeBool(self,symbol):
+		return self.symboleTable[symbol].isBool()
 
 	def getCO(self):
 		return len(self.compilationUnits)
@@ -25,6 +59,7 @@ class CodeGenerator():
 	def get_instruction_at_index(self,index):
 		#print(self.compilationUnits[index].__class__.__name__)
 		return self.compilationUnits[index].stringify(self.symboleTable)
+
 
 class CompilationUnite():
 	def stringify(self,symbols):
@@ -155,7 +190,7 @@ class empilerAd(CompilationUnite):
 	
 	def stringify(self,symbols):
 		unite = "empilerAd("
-		unite +=str(symbols[self.params[0]])
+		unite +=str(symbols[self.params[0]].getAdresse().getAdresse())
 		unite+=")"
 		return unite
 
@@ -174,9 +209,9 @@ class traStat(CompilationUnite):
 		self.params.append(nbp)
 	
 	def stringify(self,symbols):
-		unite = "empilerAd("
-		unite +=str(symbols[self.params[0]])
-		unite +=str(symbols[self.params[1]])
+		unite = "traStat("
+		unite +=str(symbols[self.params[0]].getAdresse())
+		unite +=str(symbols[self.params[1]].getAdresse())
 		unite+=")"
 		return unite
 
@@ -201,7 +236,7 @@ class empilerParam(CompilationUnite):
 	
 	def stringify(self,symbols):
 		unite = "empilerParam("
-		unite +=str(symbols[self.params[0]])
+		unite +=str(symbols[self.params[0]].getAdresse())
 		unite+=")"
 		return unite
 
@@ -214,11 +249,11 @@ class empiler(CompilationUnite):
 	def stringify(self,symbols):
 		unite = "empiler("
 		if(self.hasSymbol):
-			#print("has: "+str(self.params[0])+"->"+str(symbols[self.params[0]]))
-			unite += str(symbols[self.params[0]])
+			#print("has: "+str(self.params[0])+"->"+str(symbols[self.params[0]].getAdresse()))
+			unite += str(symbols[self.params[0]].getAdresse())
 		else:
 			#print("no: "+str(self.params[0]))
-			#print("->"+str(symbols[self.params[0]]))
+			#print("->"+str(symbols[self.params[0]].getAdresse()))
 			unite += str(self.params[0])
 		unite+=")"
 		return unite
@@ -236,7 +271,7 @@ class valeurPile(CompilationUnite):
 	
 	def stringify(self,symbols):
 		unite = "valeurPile("
-		# unite +=str(symbols[self.params[0]])
+		# unite +=str(symbols[self.params[0]].getAdresse())
 		unite+=")"
 		return unite
 
@@ -262,7 +297,7 @@ class tra(CompilationUnite):
 
 	def stringify(self,symbols):
 		unite = "tra("
-		unite += str(symbols[self.params[0]]) if (self.hasSymbol) else str(self.params[0])
+		unite += str(symbols[self.params[0]].getAdresse()) if (self.hasSymbol) else str(self.params[0])
 		unite += ")"
 		
 		return unite
@@ -282,7 +317,7 @@ class tze(CompilationUnite):
 
 	def stringify(self,symbols):
 		unite = "tze("
-		unite += str(symbols[self.params[0]]) if (self.hasSymbol) else str(self.params[0])
+		unite += str(symbols[self.params[0]].getAdresse()) if (self.hasSymbol) else str(self.params[0])
 		unite += ")"
 		return unite
 
@@ -294,7 +329,7 @@ class erreur(CompilationUnite):
 
 	def stringify(self,symbols):
 		unite = "erreur("
-		unite += str(symbols[self.params[0]])
+		unite += str(symbols[self.params[0]].getAdresse())
 		unite += ")"
 		
 		return unite

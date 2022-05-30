@@ -67,10 +67,8 @@ def partieDecla(lexical_analyser):
         listeDeclaOp(lexical_analyser)
         if not lexical_analyser.isKeyword("begin"):
             listeDeclaVar(lexical_analyser)
-
     else:
         listeDeclaVar(lexical_analyser)
-
 
 def listeDeclaOp(lexical_analyser):
     declaOp(lexical_analyser)
@@ -78,13 +76,11 @@ def listeDeclaOp(lexical_analyser):
     if lexical_analyser.isKeyword("procedure") or lexical_analyser.isKeyword("function"):
         listeDeclaOp(lexical_analyser)
 
-
 def declaOp(lexical_analyser):
     if lexical_analyser.isKeyword("procedure"):
         procedure(lexical_analyser)
     if lexical_analyser.isKeyword("function"):
         fonction(lexical_analyser)
-
 
 def procedure(lexical_analyser):
     lexical_analyser.acceptKeyword("procedure")
@@ -162,9 +158,11 @@ def mode(lexical_analyser):
 def nnpType(lexical_analyser):
     if lexical_analyser.isKeyword("integer"):
         lexical_analyser.acceptKeyword("integer")
+        codeGenerator.setType(False)
         logger.debug("integer type")
     elif lexical_analyser.isKeyword("boolean"):
         lexical_analyser.acceptKeyword("boolean")
+        codeGenerator.setType(True)
         logger.debug("boolean type")
     else:
         logger.error("Unknown type found <" +
@@ -182,7 +180,6 @@ def listeDeclaVar(lexical_analyser):
     if lexical_analyser.isIdentifier():
         listeDeclaVar(lexical_analyser)
 
-
 def declaVar(lexical_analyser):
     listeIdent(lexical_analyser)
     lexical_analyser.acceptCharacter(":")
@@ -195,8 +192,6 @@ def listeIdent(lexical_analyser):
     ident = lexical_analyser.acceptIdentifier()
     logger.debug("identifier found: "+str(ident))
     codeGenerator.addVariable(ident)
-    #codeGenerator.addUnite(empiler(ident)) ###
-    #codeGenerator.addUnite(valeurPile()) ###
 
     codeGenerator.addUnite(reserver(1))
     if lexical_analyser.isCharacter(","):
@@ -231,7 +226,10 @@ def instr(lexical_analyser):
             # affectation
             codeGenerator.addUnite(empiler(ident)) ###empiler(ident, true) --> adresse / empiler(ident, false) --> valeur
             lexical_analyser.acceptSymbol(":=")
-            expression(lexical_analyser)
+            type = expression(lexical_analyser)
+            if((codeGenerator.isSymbolTypeBool(ident) and type == 'integer') or \
+                (not codeGenerator.isSymbolTypeBool(ident) and type != 'integer') ):
+                raise AnaSynException("Type mismatch. Did not expected : "+type)
             codeGenerator.addUnite(affectation())
             logger.debug("parsed affectation")
         elif lexical_analyser.isCharacter("("):
@@ -263,39 +261,45 @@ def listePe(lexical_analyser):
 def expression(lexical_analyser):
     logger.debug("parsing expression: " + str(lexical_analyser.get_value()))
 
-    exp1(lexical_analyser)
+    type = exp1(lexical_analyser)
     if lexical_analyser.isKeyword("or"):
         lexical_analyser.acceptKeyword("or")
         exp1(lexical_analyser)
+        type= 'bool'
         codeGenerator.addUnite(ou())
+    return type
 
 
 def exp1(lexical_analyser):
     logger.debug("parsing exp1")
 
-    exp2(lexical_analyser)
+    type = exp2(lexical_analyser)
     if lexical_analyser.isKeyword("and"):
         lexical_analyser.acceptKeyword("and")
         exp2(lexical_analyser)
+        type= 'bool'
         codeGenerator.addUnite(et())
-
+    return type
 
 def exp2(lexical_analyser):
     logger.debug("parsing exp2")
     op = None
-    exp3(lexical_analyser)
+    type = exp3(lexical_analyser)
     if lexical_analyser.isSymbol("<") or \
             lexical_analyser.isSymbol("<=") or \
             lexical_analyser.isSymbol(">") or \
             lexical_analyser.isSymbol(">="):
         op = opRel(lexical_analyser)
         exp3(lexical_analyser)
+        type = 'bool'
     elif lexical_analyser.isSymbol("=") or \
             lexical_analyser.isSymbol("/="):
         op = opRel(lexical_analyser)
         exp3(lexical_analyser)
+        type = 'bool'
     if(not(op == None)) :
         codeGenerator.addUnite(op)
+    return type
 
 
 def opRel(lexical_analyser):
@@ -328,14 +332,16 @@ def opRel(lexical_analyser):
 
 def exp3(lexical_analyser):
     logger.debug("parsing exp3")
-    exp4(lexical_analyser)
+    type =exp4(lexical_analyser)
+
     op = None
     if lexical_analyser.isCharacter("+") or lexical_analyser.isCharacter("-"):
         op = opAdd(lexical_analyser)
+        type = 'integer'
         exp4(lexical_analyser)
     if(not(op == None)) :
         codeGenerator.addUnite(op)
-
+    return type
 
 def opAdd(lexical_analyser):
     logger.debug("parsing additive operator: " + lexical_analyser.get_value())
@@ -354,12 +360,13 @@ def opAdd(lexical_analyser):
 def exp4(lexical_analyser):
     logger.debug("parsing exp4")
     op = None
-    prim(lexical_analyser)
+    type = prim(lexical_analyser)
     if lexical_analyser.isCharacter("*") or lexical_analyser.isCharacter("/"):
         op = opMult(lexical_analyser)
-        prim(lexical_analyser)
+        type = prim(lexical_analyser)
     if(not(op == None)) :
         codeGenerator.addUnite(op)
+    return type
 
 
 def opMult(lexical_analyser):
@@ -382,9 +389,10 @@ def prim(lexical_analyser):
     op = None
     if lexical_analyser.isCharacter("+") or lexical_analyser.isCharacter("-") or lexical_analyser.isKeyword("not"):
         op = opUnaire(lexical_analyser)
-    elemPrim(lexical_analyser)
+    type = elemPrim(lexical_analyser)
     if(not(op == None) ) :
         codeGenerator.addUnite(op)
+    return type
 
 
 def opUnaire(lexical_analyser):
@@ -412,7 +420,7 @@ def elemPrim(lexical_analyser):
         expression(lexical_analyser)
         lexical_analyser.acceptCharacter(")")
     elif lexical_analyser.isInteger() or lexical_analyser.isKeyword("true") or lexical_analyser.isKeyword("false"):
-        valeur(lexical_analyser)
+        return valeur(lexical_analyser)
     elif lexical_analyser.isIdentifier():
         ident = lexical_analyser.acceptIdentifier()
         if lexical_analyser.isCharacter("("):			# Appel fonct
@@ -472,6 +480,8 @@ def es(lexical_analyser):
         lexical_analyser.acceptCharacter("(")
         ident = lexical_analyser.acceptIdentifier()
         lexical_analyser.acceptCharacter(")")
+        if(codeGenerator.isSymbolTypeBool(ident)):
+            raise AnaSynException("Type mismatch. Did not expected : integer")
         codeGenerator.addUnite(empiler(ident,True))
         codeGenerator.addUnite(get())
         logger.debug("Call to get "+ident)
@@ -479,7 +489,9 @@ def es(lexical_analyser):
         
         lexical_analyser.acceptKeyword("put")
         lexical_analyser.acceptCharacter("(")
-        expression(lexical_analyser)        
+        type = expression(lexical_analyser)
+        if(type !='integer'):
+            raise AnaSynException("Type mismatch. Expected : integer")
         lexical_analyser.acceptCharacter(")")
         logger.debug("Call to put")
         codeGenerator.addUnite(put())
@@ -492,7 +504,9 @@ def boucle(lexical_analyser):
     logger.debug("parsing while loop: ")
     lexical_analyser.acceptKeyword("while")
     ad1 = codeGenerator.getCO()
-    expression(lexical_analyser)
+    type = expression(lexical_analyser)
+    if(type =='integer'):
+            raise AnaSynException("Type mismatch. Expected : bool")
     lexical_analyser.acceptKeyword("loop")
     tze1 = tze()
     codeGenerator.addUnite(tze1)
@@ -509,7 +523,9 @@ def altern(lexical_analyser):
     logger.debug("parsing if: ")
     lexical_analyser.acceptKeyword("if")
     
-    expression(lexical_analyser)
+    type = expression(lexical_analyser)
+    if(type =='integer'):
+        raise AnaSynException("Type mismatch. Expected : bool")
     jump = tze()
     codeGenerator.addUnite(jump)
     lexical_analyser.acceptKeyword("then")
