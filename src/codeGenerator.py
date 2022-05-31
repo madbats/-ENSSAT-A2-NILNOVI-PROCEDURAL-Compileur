@@ -1,8 +1,11 @@
 #!/usr/bin/python
 
+from inspect import isfunction
+
+
 class Symbole():
 	adresse = 0
-
+	out = False
 	bool = False
 
 	def __init__(self,ident,adresse):
@@ -12,11 +15,17 @@ class Symbole():
 	def setBool(self,val):
 		self.bool = val
 
+	def setOut(self,val):
+		self.out = val
+
+	def isOut(self):
+		return self.out
+
 	def isBool(self):
 		return self.bool
 	
 	def isInteger(self):
-		return not self.bool
+		return not self.isBool() and not self.isProcedure()
 	
 	def getAdresse(self):
 		return self.adresse
@@ -24,17 +33,62 @@ class Symbole():
 	def getIdent(self):
 		return self.ident
 
-class CodeGenerator():
-	symboleTable = dict()
-	compilationUnits=[]
-	compteurVariable = 1
+	def isOperation(self):
+		return False
+	
+	def isFunction(self):
+		return False and self.isOperation()
+	
+	def isProcedure(self):
+		return False and self.isOperation()
 
-	listeIdent = []
+class Opperation(Symbole):
+
+	def __init__(self,ident,adresse):
+		self.ident = ident
+		self.adresse = adresse
+		self.params = []
+
+	def addParam(self,par):
+		self.params.append(par)
+	
+	def isOperation():
+		return True
+
+class Function(Opperation):
+
+	def isFunction(self):
+		return True
+	
+	def setReturnType(self,type):
+		self.returnType = type
+		if(type == 'bool'):
+			self.bool = True
+		elif(type == 'integer'):
+			self.bool = False
+
+
+class Procedure(Opperation):
+
+	def isProcedure(self):
+		return True
+
+class CodeGenerator():
+	
+	def __init__(self):
+		self.compilationUnits = []
+		self.symboleTable = dict()
+		self.compilationUnits=[]
+		self.coDecalage = 0
+		self.compteurVariable = 1
+		self.listeIdent = []
 
 	def addUnite(self,unite):
 		#print(unite.__class__.__name__)
 		self.compilationUnits.append(unite)
-	
+		if unite.__class__.__name__ == "OperationGenerator" :
+			self.coDecalage += len(unite.compilationUnits)
+
 	def addVariable(self,symbol):
 		self.listeIdent.append(Symbole(symbol,self.compteurVariable))
 		self.compteurVariable+=1
@@ -43,9 +97,10 @@ class CodeGenerator():
 		for sym in self.listeIdent:
 			sym.setBool(isBool)
 			self.symboleTable[sym.getIdent()] = sym
+		self.listeIdent = []
 
-	def addSymbole(self,symbol):
-		self.symboleTable[symbol] = len(self.compilationUnits)
+	def addOperation(self,op):
+		self.symboleTable[op.getIdent()] = op
 
 	def getSymboleTable(self):
 		return self.symboleTable
@@ -53,8 +108,14 @@ class CodeGenerator():
 	def isSymbolTypeBool(self,symbol):
 		return self.symboleTable[symbol].isBool()
 
+	def isSymbolTypeOperation(self,symbol):
+		return self.symboleTable[symbol].isOperation()
+	
+	def isSymbolTypeFunction(self,symbol):
+		return self.symboleTable[symbol].isFunction()
+
 	def getCO(self):
-		return len(self.compilationUnits)
+		return len(self.compilationUnits) + self.coDecalage
 
 	def get_instruction_at_index(self,index):
 		#print(self.compilationUnits[index].__class__.__name__)
@@ -65,7 +126,59 @@ class CompilationUnite():
 	def stringify(self,symbols):
 		return False
 
+class OperationGenerator(CodeGenerator,CompilationUnite):
+	
+	def __init__(self,parent):
+		self.parent = parent
+		self.operation = None
+		self.paramState = False
+		self.compilationUnits = []
+		self.symboleTable = dict()
+		self.compilationUnits=[]
+		self.coDecalage = 0
+		self.compteurVariable = 1
 
+
+	listeIdent = []
+
+	def toggleParamState(self):
+		self.paramState = not self.paramState
+
+
+	def setOperation(self,operation):
+		self.addOperation(operation)
+		self.parent.addOperation(operation)
+		self.operation = operation
+	
+	def addParam(self,param):
+		self.operation.addParam(param)
+
+	def getCO(self):
+		return len(self.compilationUnits)+self.parent.getCO()
+	
+	def getParent(self):
+		return self.parent
+	
+	def setMode(self,isOut=False):
+		for sym in self.listeIdent:
+			sym.setOut(isOut)
+
+	def setType(self,isBool=False):
+		for sym in self.listeIdent:
+			sym.setBool(isBool)
+			self.symboleTable[sym.getIdent()] = sym
+			if self.paramState :
+				self.operation.addParam(sym)
+		self.listeIdent = []
+
+	def stringify(self,symbols):
+		instrIndex = 0
+		string = ""
+		while instrIndex < len(self.compilationUnits):
+			string += ("%s\n" % str(self.get_instruction_at_index(instrIndex)))
+			instrIndex += 1
+		string = string.rstrip(string[-1])
+		return string
 
 class debutProg(CompilationUnite):
 	params =[]

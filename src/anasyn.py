@@ -4,6 +4,7 @@
 # 	Syntactical Analyser package.
 #
 
+from copy import copy
 import sys
 import argparse
 import re
@@ -14,6 +15,7 @@ from codeGenerator import *
 
 logger = logging.getLogger('anasyn')
 codeGenerator = CodeGenerator()
+operationGenerator = None
 DEBUG = False
 LOGGING_LEVEL = logging.DEBUG
 
@@ -31,12 +33,14 @@ class AnaSynException(Exception):
 
 
 def program(lexical_analyser):
+    global codeGenerator
     specifProgPrinc(lexical_analyser)
     lexical_analyser.acceptKeyword("is")
     corpsProgPrinc(lexical_analyser)
 
 
 def specifProgPrinc(lexical_analyser):
+    global codeGenerator
     lexical_analyser.acceptKeyword("procedure")
     
     ident = lexical_analyser.acceptIdentifier()
@@ -44,6 +48,7 @@ def specifProgPrinc(lexical_analyser):
 
 
 def corpsProgPrinc(lexical_analyser):
+    global codeGenerator
     codeGenerator.addUnite(debutProg())
     if not lexical_analyser.isKeyword("begin"):
         logger.debug("Parsing declarations")
@@ -68,33 +73,45 @@ def corpsProgPrinc(lexical_analyser):
 
 
 def partieDecla(lexical_analyser):
+    global codeGenerator
     if lexical_analyser.isKeyword("procedure") or lexical_analyser.isKeyword("function"):
         tra1 = tra()
         codeGenerator.addUnite(tra1)
         listeDeclaOp(lexical_analyser)
-        tra1.setAd(codeGenerator.getCO)
+        tra1.setAd(codeGenerator.getCO())
         if not lexical_analyser.isKeyword("begin"):
             listeDeclaVar(lexical_analyser)
     else:
         listeDeclaVar(lexical_analyser)
 
 def listeDeclaOp(lexical_analyser):
+    global codeGenerator
     declaOp(lexical_analyser)
     lexical_analyser.acceptCharacter(";")
     if lexical_analyser.isKeyword("procedure") or lexical_analyser.isKeyword("function"):
         listeDeclaOp(lexical_analyser)
 
 def declaOp(lexical_analyser):
+    global codeGenerator
+    operationGenerator = OperationGenerator(copy(codeGenerator))
+    
+    codeGenerator = operationGenerator
     if lexical_analyser.isKeyword("procedure"):
         procedure(lexical_analyser)
     if lexical_analyser.isKeyword("function"):
         fonction(lexical_analyser)
+    codeGenerator = copy(codeGenerator.getParent())
+    
+    codeGenerator.addUnite(copy(operationGenerator))
+    operationGenerator = None
 
 def procedure(lexical_analyser):
+    global codeGenerator
     lexical_analyser.acceptKeyword("procedure")
     ident = lexical_analyser.acceptIdentifier()
     logger.debug("Name of procedure : "+ident)
-
+    proc = Procedure(ident,codeGenerator.getCO())
+    codeGenerator.setOperation(proc)
     partieFormelle(lexical_analyser)
 
     lexical_analyser.acceptKeyword("is")
@@ -102,20 +119,23 @@ def procedure(lexical_analyser):
 
 
 def fonction(lexical_analyser):
+    global codeGenerator
     lexical_analyser.acceptKeyword("function")
     ident = lexical_analyser.acceptIdentifier()
     logger.debug("Name of function : "+ident)
-
+    func = Function(ident,codeGenerator.getCO())
+    codeGenerator.setOperation(func)
     partieFormelle(lexical_analyser)
 
     lexical_analyser.acceptKeyword("return")
-    nnpType(lexical_analyser)
-
+    ret = nnpType(lexical_analyser)
+    func.setReturnType(ret)
     lexical_analyser.acceptKeyword("is")
     corpsFonct(lexical_analyser)
 
 
 def corpsProc(lexical_analyser):
+    global codeGenerator
     if not lexical_analyser.isKeyword("begin"):
         partieDeclaProc(lexical_analyser)
     lexical_analyser.acceptKeyword("begin")
@@ -124,6 +144,7 @@ def corpsProc(lexical_analyser):
 
 
 def corpsFonct(lexical_analyser):
+    global codeGenerator
     if not lexical_analyser.isKeyword("begin"):
         partieDeclaProc(lexical_analyser)
     lexical_analyser.acceptKeyword("begin")
@@ -132,13 +153,17 @@ def corpsFonct(lexical_analyser):
 
 
 def partieFormelle(lexical_analyser):
+    global codeGenerator
     lexical_analyser.acceptCharacter("(")
+    codeGenerator.toggleParamState()
     if not lexical_analyser.isCharacter(")"):
         listeSpecifFormelles(lexical_analyser)
     lexical_analyser.acceptCharacter(")")
+    codeGenerator.toggleParamState()
 
 
 def listeSpecifFormelles(lexical_analyser):
+    global codeGenerator
     specif(lexical_analyser)
     if not lexical_analyser.isCharacter(")"):
         lexical_analyser.acceptCharacter(";")
@@ -146,32 +171,40 @@ def listeSpecifFormelles(lexical_analyser):
 
 
 def specif(lexical_analyser):
-    listeIdent(lexical_analyser)
+    global codeGenerator
+    nb = listeIdent(lexical_analyser)
     lexical_analyser.acceptCharacter(":")
     if lexical_analyser.isKeyword("in"):
-        mode(lexical_analyser)
+        isOut = mode(lexical_analyser)
+        codeGenerator.setMode((isOut == 'out'))
 
     nnpType(lexical_analyser)
 
 
 def mode(lexical_analyser):
+    global codeGenerator
     lexical_analyser.acceptKeyword("in")
     if lexical_analyser.isKeyword("out"):
         lexical_analyser.acceptKeyword("out")
         logger.debug("in out parameter")
+        return 'out'
     else:
         logger.debug("in parameter")
+        return 'in'
 
 
 def nnpType(lexical_analyser):
+    global codeGenerator
     if lexical_analyser.isKeyword("integer"):
         lexical_analyser.acceptKeyword("integer")
         codeGenerator.setType(False)
         logger.debug("integer type")
+        return 'integer'
     elif lexical_analyser.isKeyword("boolean"):
         lexical_analyser.acceptKeyword("boolean")
         codeGenerator.setType(True)
         logger.debug("boolean type")
+        return 'bool'
     else:
         logger.error("Unknown type found <" +
                      lexical_analyser.get_value() + ">!")
@@ -180,34 +213,39 @@ def nnpType(lexical_analyser):
 
 
 def partieDeclaProc(lexical_analyser):
+    global codeGenerator
     listeDeclaVar(lexical_analyser)
 
 
 def listeDeclaVar(lexical_analyser):
+    global codeGenerator
     declaVar(lexical_analyser)
     if lexical_analyser.isIdentifier():
         listeDeclaVar(lexical_analyser)
 
 def declaVar(lexical_analyser):
-    listeIdent(lexical_analyser)
+    global codeGenerator
+    nb = listeIdent(lexical_analyser)
     lexical_analyser.acceptCharacter(":")
-    logger.debug("now parsing type...")
+    logger.debug("now parsing type...")    
+    codeGenerator.addUnite(reserver(nb))
     nnpType(lexical_analyser)
     lexical_analyser.acceptCharacter(";")
 
 
 def listeIdent(lexical_analyser):
+    global codeGenerator
     ident = lexical_analyser.acceptIdentifier()
     logger.debug("identifier found: "+str(ident))
     codeGenerator.addVariable(ident)
 
-    codeGenerator.addUnite(reserver(1))
     if lexical_analyser.isCharacter(","):
         lexical_analyser.acceptCharacter(",")
-        listeIdent(lexical_analyser)
-
+        return listeIdent(lexical_analyser)+1
+    return 1
 
 def suiteInstrNonVide(lexical_analyser):
+    global codeGenerator
     instr(lexical_analyser)
     if lexical_analyser.isCharacter(";"):
         lexical_analyser.acceptCharacter(";")
@@ -215,11 +253,13 @@ def suiteInstrNonVide(lexical_analyser):
 
 
 def suiteInstr(lexical_analyser):
+    global codeGenerator
     if not lexical_analyser.isKeyword("end"):
         suiteInstrNonVide(lexical_analyser)
 
 
 def instr(lexical_analyser):
+    global codeGenerator
     if lexical_analyser.isKeyword("while"):
         boucle(lexical_analyser)
     elif lexical_analyser.isKeyword("if"):
@@ -259,6 +299,7 @@ def instr(lexical_analyser):
 
 
 def listePe(lexical_analyser):
+    global codeGenerator
     expression(lexical_analyser)
     if lexical_analyser.isCharacter(","):
         lexical_analyser.acceptCharacter(",")
@@ -267,6 +308,7 @@ def listePe(lexical_analyser):
 
 
 def expression(lexical_analyser):
+    global codeGenerator
     logger.debug("parsing expression: " + str(lexical_analyser.get_value()))
 
     type = exp1(lexical_analyser)
@@ -279,6 +321,7 @@ def expression(lexical_analyser):
 
 
 def exp1(lexical_analyser):
+    global codeGenerator
     logger.debug("parsing exp1")
 
     type = exp2(lexical_analyser)
@@ -290,6 +333,7 @@ def exp1(lexical_analyser):
     return type
 
 def exp2(lexical_analyser):
+    global codeGenerator
     logger.debug("parsing exp2")
     op = None
     type = exp3(lexical_analyser)
@@ -311,6 +355,7 @@ def exp2(lexical_analyser):
 
 
 def opRel(lexical_analyser):
+    global codeGenerator
     logger.debug("parsing relationnal operator: " +
                  lexical_analyser.get_value())
 
@@ -339,6 +384,7 @@ def opRel(lexical_analyser):
 
 
 def exp3(lexical_analyser):
+    global codeGenerator
     logger.debug("parsing exp3")
     type =exp4(lexical_analyser)
 
@@ -352,6 +398,7 @@ def exp3(lexical_analyser):
     return type
 
 def opAdd(lexical_analyser):
+    global codeGenerator
     logger.debug("parsing additive operator: " + lexical_analyser.get_value())
     if lexical_analyser.isCharacter("+"):
         lexical_analyser.acceptCharacter("+")
@@ -366,6 +413,7 @@ def opAdd(lexical_analyser):
 
 
 def exp4(lexical_analyser):
+    global codeGenerator
     logger.debug("parsing exp4")
     op = None
     type = prim(lexical_analyser)
@@ -378,6 +426,7 @@ def exp4(lexical_analyser):
 
 
 def opMult(lexical_analyser):
+    global codeGenerator
     logger.debug("parsing multiplicative operator: " +
                  lexical_analyser.get_value())
     if lexical_analyser.isCharacter("*"):
@@ -393,6 +442,7 @@ def opMult(lexical_analyser):
 
 
 def prim(lexical_analyser):
+    global codeGenerator
     logger.debug("parsing prim")
     op = None
     if lexical_analyser.isCharacter("+") or lexical_analyser.isCharacter("-") or lexical_analyser.isKeyword("not"):
@@ -404,6 +454,7 @@ def prim(lexical_analyser):
 
 
 def opUnaire(lexical_analyser):
+    global codeGenerator
     logger.debug("parsing unary operator: " + lexical_analyser.get_value())
     if lexical_analyser.isCharacter("+"):
         lexical_analyser.acceptCharacter("+")
@@ -422,10 +473,12 @@ def opUnaire(lexical_analyser):
 
 
 def elemPrim(lexical_analyser):
+    global codeGenerator
     logger.debug("parsing elemPrim: " + str(lexical_analyser.get_value()))
+    type = None
     if lexical_analyser.isCharacter("("):
         lexical_analyser.acceptCharacter("(")
-        expression(lexical_analyser)
+        type = expression(lexical_analyser)
         lexical_analyser.acceptCharacter(")")
     elif lexical_analyser.isInteger() or lexical_analyser.isKeyword("true") or lexical_analyser.isKeyword("false"):
         return valeur(lexical_analyser)
@@ -446,12 +499,22 @@ def elemPrim(lexical_analyser):
             logger.debug("Use of an identifier as an expression: " + ident)
             codeGenerator.addUnite(empiler(ident))
             codeGenerator.addUnite(valeurPile())
+        if(codeGenerator.isSymbolTypeFunction(ident) or not codeGenerator.isSymbolTypeOperation(ident) ):
+            if (codeGenerator.isSymbolTypeBool(ident)):
+                type = 'bool'
+            else:
+                type = 'integer'
+        else:
+            logger.error("Procedures cannot return values")
+            raise AnaSynException("Procedures cannot return values!")
     else:
         logger.error("Unknown Value!")
         raise AnaSynException("Unknown Value!")
+    return type
 
 
 def valeur(lexical_analyser):
+    global codeGenerator
     if lexical_analyser.isInteger():
         entier = lexical_analyser.acceptInteger()
         logger.debug("integer value: " + str(entier))
@@ -468,6 +531,7 @@ def valeur(lexical_analyser):
 
 
 def valBool(lexical_analyser):
+    global codeGenerator
     if lexical_analyser.isKeyword("true"):
         lexical_analyser.acceptKeyword("true")
         codeGenerator.addUnite(empiler(1,False))
@@ -482,6 +546,7 @@ def valBool(lexical_analyser):
 
 
 def es(lexical_analyser):
+    global codeGenerator
     logger.debug("parsing E/S instruction: " + lexical_analyser.get_value())
     if lexical_analyser.isKeyword("get"):
         lexical_analyser.acceptKeyword("get")
@@ -499,7 +564,7 @@ def es(lexical_analyser):
         lexical_analyser.acceptCharacter("(")
         type = expression(lexical_analyser)
         if(type !='integer'):
-            raise AnaSynException("Type mismatch. Expected : integer")
+            raise AnaSynException("Type mismatch. Expected : integer got "+ type)
         lexical_analyser.acceptCharacter(")")
         logger.debug("Call to put")
         codeGenerator.addUnite(put())
@@ -509,6 +574,7 @@ def es(lexical_analyser):
 
 
 def boucle(lexical_analyser):
+    global codeGenerator
     logger.debug("parsing while loop: ")
     lexical_analyser.acceptKeyword("while")
     ad1 = codeGenerator.getCO()
@@ -528,6 +594,7 @@ def boucle(lexical_analyser):
 
 
 def altern(lexical_analyser):
+    global codeGenerator
     logger.debug("parsing if: ")
     lexical_analyser.acceptKeyword("if")
     
@@ -552,6 +619,7 @@ def altern(lexical_analyser):
 
 
 def retour(lexical_analyser):
+    global codeGenerator
     logger.debug("parsing return instruction")
     lexical_analyser.acceptKeyword("return")
     expression(lexical_analyser)
@@ -628,9 +696,15 @@ def main():
     else:
         output_file = sys.stdout
 
+    for unite in codeGenerator.compilationUnits:
+        print(""+unite.__class__.__name__)
+        if unite.__class__.__name__ == 'OperationGenerator':
+            for u in unite.compilationUnits:
+                print("- "+u.__class__.__name__)
+
     # Outputs the generated code to a file
     instrIndex = 0
-    while instrIndex < codeGenerator.getCO():
+    while instrIndex < len(codeGenerator.compilationUnits):
         output_file.write("%s\n" % str(codeGenerator.get_instruction_at_index(instrIndex)))
         instrIndex += 1
 

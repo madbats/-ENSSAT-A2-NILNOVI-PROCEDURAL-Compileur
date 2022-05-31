@@ -32,8 +32,9 @@ L'ensemble des instructions de la machine possède une fonction correspondante �
 
 ---
 
-- [ ] Implémenté les instructions spécifique à la machine NNP
+- [X] Implémenté les instructions spécifique à la machine NNP
 - [ ] Implémenté les schémas de compliation spécifique à la machine NNP
-- [ ] Ajouté l'enregistrement des types à la table des symboles
-- [ ] Ajouté la vérification des types au class d'instruction VM
-- [ ] Gestion des environements spécifique à chaque fonction/procédure
+- [X] Ajouté l'enregistrement des types à la table des symboles
+- [X] Ajouté la vérification des types au class d'instruction VM
+- [X] Gestion des environements spécifique à chaque fonction/procédure
+- [ ] Gestion des mode de parametres 
