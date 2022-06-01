@@ -1,16 +1,13 @@
 //----------------------------------------------------
-// Programme correct
+// Programme incorrect
 //
-// Somme de deux valeur
-// doit afficher : 
-//
-//> 7
+// Modification d'un parametre non en mode 'out'
 //
 //------------------------------------------------------
 procedure pp is
   procedure p(v : in integer; i : in out integer) is
   begin
-    i := i + v
+    v := i + v
   end;
   a : integer;
 begin

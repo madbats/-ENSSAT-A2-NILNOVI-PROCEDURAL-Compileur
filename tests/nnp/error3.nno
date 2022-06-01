@@ -1,0 +1,14 @@
+//----------------------------------------------------
+// Programme incorrect
+//
+//	retour boolean d'une function 
+//
+//------------------------------------------------------
+procedure pp is
+  function isTrue(n : in boolean) return boolean is
+  begin
+    return n
+  end;
+begin
+  put(isTrue(3))
+end.
