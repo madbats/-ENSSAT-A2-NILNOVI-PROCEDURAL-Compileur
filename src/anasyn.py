@@ -42,7 +42,7 @@ def program(lexical_analyser):
 def specifProgPrinc(lexical_analyser):
     global codeGenerator
     lexical_analyser.acceptKeyword("procedure")
-    
+
     ident = lexical_analyser.acceptIdentifier()
     logger.debug("Name of program : "+ident)
 
@@ -52,14 +52,10 @@ def corpsProgPrinc(lexical_analyser):
     codeGenerator.addUnite(debutProg())
     if not lexical_analyser.isKeyword("begin"):
         logger.debug("Parsing declarations")
-        
-        
+
         partieDecla(lexical_analyser)
         logger.debug("End of declarations")
     lexical_analyser.acceptKeyword("begin")
-
-    
-
 
     if not lexical_analyser.isKeyword("end"):
         logger.debug("Parsing instructions")
@@ -78,11 +74,12 @@ def partieDecla(lexical_analyser):
         tra1 = tra()
         codeGenerator.addUnite(tra1)
         listeDeclaOp(lexical_analyser)
-        tra1.setAd(codeGenerator.getCO())
+        tra1.setAd(codeGenerator.getCO()-1)
         if not lexical_analyser.isKeyword("begin"):
             listeDeclaVar(lexical_analyser)
     else:
         listeDeclaVar(lexical_analyser)
+
 
 def listeDeclaOp(lexical_analyser):
     global codeGenerator
@@ -91,31 +88,34 @@ def listeDeclaOp(lexical_analyser):
     if lexical_analyser.isKeyword("procedure") or lexical_analyser.isKeyword("function"):
         listeDeclaOp(lexical_analyser)
 
+
 def declaOp(lexical_analyser):
     global codeGenerator
     operationGenerator = OperationGenerator(copy(codeGenerator))
-    
+
     codeGenerator = operationGenerator
     if lexical_analyser.isKeyword("procedure"):
         procedure(lexical_analyser)
     if lexical_analyser.isKeyword("function"):
         fonction(lexical_analyser)
     codeGenerator = copy(codeGenerator.getParent())
-    
+
     codeGenerator.addUnite(copy(operationGenerator))
     operationGenerator = None
+
 
 def procedure(lexical_analyser):
     global codeGenerator
     lexical_analyser.acceptKeyword("procedure")
     ident = lexical_analyser.acceptIdentifier()
     logger.debug("Name of procedure : "+ident)
-    proc = Procedure(ident,codeGenerator.getCO())
+    proc = Procedure(ident, codeGenerator.getCO())
     codeGenerator.setOperation(proc)
     partieFormelle(lexical_analyser)
 
     lexical_analyser.acceptKeyword("is")
     corpsProc(lexical_analyser)
+    codeGenerator.addUnite(retourProc())
 
 
 def fonction(lexical_analyser):
@@ -123,7 +123,7 @@ def fonction(lexical_analyser):
     lexical_analyser.acceptKeyword("function")
     ident = lexical_analyser.acceptIdentifier()
     logger.debug("Name of function : "+ident)
-    func = Function(ident,codeGenerator.getCO())
+    func = Function(ident, codeGenerator.getCO())
     codeGenerator.setOperation(func)
     partieFormelle(lexical_analyser)
 
@@ -204,7 +204,7 @@ def nnpType(lexical_analyser):
         lexical_analyser.acceptKeyword("boolean")
         codeGenerator.setType(True)
         logger.debug("boolean type")
-        return 'bool'
+        return 'boolean'
     else:
         logger.error("Unknown type found <" +
                      lexical_analyser.get_value() + ">!")
@@ -223,11 +223,12 @@ def listeDeclaVar(lexical_analyser):
     if lexical_analyser.isIdentifier():
         listeDeclaVar(lexical_analyser)
 
+
 def declaVar(lexical_analyser):
     global codeGenerator
     nb = listeIdent(lexical_analyser)
     lexical_analyser.acceptCharacter(":")
-    logger.debug("now parsing type...")    
+    logger.debug("now parsing type...")
     codeGenerator.addUnite(reserver(nb))
     nnpType(lexical_analyser)
     lexical_analyser.acceptCharacter(";")
@@ -243,6 +244,7 @@ def listeIdent(lexical_analyser):
         lexical_analyser.acceptCharacter(",")
         return listeIdent(lexical_analyser)+1
     return 1
+
 
 def suiteInstrNonVide(lexical_analyser):
     global codeGenerator
@@ -272,19 +274,40 @@ def instr(lexical_analyser):
         ident = lexical_analyser.acceptIdentifier()
         if lexical_analyser.isSymbol(":="):
             # affectation
-            codeGenerator.addUnite(empiler(ident)) ###empiler(ident, true) --> adresse / empiler(ident, false) --> valeur
+            # empiler(ident, true) --> adresse / empiler(ident, false) --> valeur
+            if(codeGenerator.isOperation()):
+                param = codeGenerator.getSymboleTable()[ident]
+                if(param.isParam()):
+                    if(param.isOut()):
+                        codeGenerator.addUnite(empilerParam(ident))
+                    else:
+                        raise AnaSynException(
+                            "%s is not set to 'out' but is beeing modified" % ident)
+                else:
+                    codeGenerator.addUnite(empilerAd(ident))
+            else:
+                codeGenerator.addUnite(empiler(ident))
+
             lexical_analyser.acceptSymbol(":=")
             type = expression(lexical_analyser)
-            if((codeGenerator.isSymbolTypeBool(ident) and type == 'integer') or \
-                (not codeGenerator.isSymbolTypeBool(ident) and type != 'integer') ):
-                raise AnaSynException("Type mismatch. Did not expected : "+type)
+            if((codeGenerator.isSymbolTypeBool(ident) and type == 'integer') or
+                    (not codeGenerator.isSymbolTypeBool(ident) and type != 'integer')):
+                raise AnaSynException(
+                    "Type mismatch. Did not expected : "+type)
             codeGenerator.addUnite(affectation())
             logger.debug("parsed affectation")
         elif lexical_analyser.isCharacter("("):
             lexical_analyser.acceptCharacter("(")
+            codeGenerator.addUnite(reserverBloc())
+            nombre = 0
             if not lexical_analyser.isCharacter(")"):
-                listePe(lexical_analyser)
+                nombre = listePe(lexical_analyser)
+            expected = codeGenerator.getSymboleTable()[ident].nombreParam()
+            if(nombre != expected):
+                raise AnaSynException(
+                    "%s Expected %d parameters but got %d" % (str(ident), expected, nombre))
 
+            codeGenerator.addUnite(traStat(ident, nombre))
             lexical_analyser.acceptCharacter(")")
             logger.debug("parsed procedure call")
         else:
@@ -315,7 +338,7 @@ def expression(lexical_analyser):
     if lexical_analyser.isKeyword("or"):
         lexical_analyser.acceptKeyword("or")
         exp1(lexical_analyser)
-        type= 'bool'
+        type = 'boolean'
         codeGenerator.addUnite(ou())
     return type
 
@@ -328,9 +351,10 @@ def exp1(lexical_analyser):
     if lexical_analyser.isKeyword("and"):
         lexical_analyser.acceptKeyword("and")
         exp2(lexical_analyser)
-        type= 'bool'
+        type = 'boolean'
         codeGenerator.addUnite(et())
     return type
+
 
 def exp2(lexical_analyser):
     global codeGenerator
@@ -343,13 +367,13 @@ def exp2(lexical_analyser):
             lexical_analyser.isSymbol(">="):
         op = opRel(lexical_analyser)
         exp3(lexical_analyser)
-        type = 'bool'
+        type = 'boolean'
     elif lexical_analyser.isSymbol("=") or \
             lexical_analyser.isSymbol("/="):
         op = opRel(lexical_analyser)
         exp3(lexical_analyser)
-        type = 'bool'
-    if(not(op == None)) :
+        type = 'boolean'
+    if(not(op == None)):
         codeGenerator.addUnite(op)
     return type
 
@@ -386,16 +410,17 @@ def opRel(lexical_analyser):
 def exp3(lexical_analyser):
     global codeGenerator
     logger.debug("parsing exp3")
-    type =exp4(lexical_analyser)
+    type = exp4(lexical_analyser)
 
     op = None
     if lexical_analyser.isCharacter("+") or lexical_analyser.isCharacter("-"):
         op = opAdd(lexical_analyser)
         type = 'integer'
         exp4(lexical_analyser)
-    if(not(op == None)) :
+    if(not(op == None)):
         codeGenerator.addUnite(op)
     return type
+
 
 def opAdd(lexical_analyser):
     global codeGenerator
@@ -420,7 +445,7 @@ def exp4(lexical_analyser):
     if lexical_analyser.isCharacter("*") or lexical_analyser.isCharacter("/"):
         op = opMult(lexical_analyser)
         type = prim(lexical_analyser)
-    if(not(op == None)) :
+    if(not(op == None)):
         codeGenerator.addUnite(op)
     return type
 
@@ -448,7 +473,7 @@ def prim(lexical_analyser):
     if lexical_analyser.isCharacter("+") or lexical_analyser.isCharacter("-") or lexical_analyser.isKeyword("not"):
         op = opUnaire(lexical_analyser)
     type = elemPrim(lexical_analyser)
-    if(not(op == None) ) :
+    if(not(op == None)):
         codeGenerator.addUnite(op)
     return type
 
@@ -487,21 +512,32 @@ def elemPrim(lexical_analyser):
         if lexical_analyser.isCharacter("("):			# Appel fonct
             lexical_analyser.acceptCharacter("(")
             codeGenerator.addUnite(reserverBloc())
+            nbParam = 0
             if not lexical_analyser.isCharacter(")"):
                 nbParam = listePe(lexical_analyser)
+            expected = codeGenerator.getSymboleTable()[ident].nombreParam()
+            if(nbParam != expected):
+                raise AnaSynException(
+                    "%s Expected %d parameters but got %d" % (str(ident), expected, nbParam))
 
             lexical_analyser.acceptCharacter(")")
             logger.debug("parsed procedure call")
-            codeGenerator.addUnite(tra(ident))
+            # codeGenerator.addUnite(tra(ident))
             logger.debug("Call to function: " + ident)
             codeGenerator.addUnite(traStat(ident, nbParam))
         else:
             logger.debug("Use of an identifier as an expression: " + ident)
-            codeGenerator.addUnite(empiler(ident))
+            if(codeGenerator.isOperation()):
+                if(codeGenerator.getSymboleTable()[ident].isOut()):
+                    codeGenerator.addUnite(empilerParam(ident))
+                else:
+                    codeGenerator.addUnite(empilerAd(ident))
+            else:
+                codeGenerator.addUnite(empiler(ident))
             codeGenerator.addUnite(valeurPile())
-        if(codeGenerator.isSymbolTypeFunction(ident) or not codeGenerator.isSymbolTypeOperation(ident) ):
+        if(codeGenerator.isSymbolTypeFunction(ident) or not codeGenerator.isSymbolTypeOperation(ident)):
             if (codeGenerator.isSymbolTypeBool(ident)):
-                type = 'bool'
+                type = 'boolean'
             else:
                 type = 'integer'
         else:
@@ -519,7 +555,7 @@ def valeur(lexical_analyser):
         entier = lexical_analyser.acceptInteger()
         logger.debug("integer value: " + str(entier))
         logger.debug("entier:"+str(entier))
-        codeGenerator.addUnite(empiler(entier,False))
+        codeGenerator.addUnite(empiler(entier, False))
         return "integer"
     elif lexical_analyser.isKeyword("true") or lexical_analyser.isKeyword("false"):
         vtype = valBool(lexical_analyser)
@@ -534,13 +570,13 @@ def valBool(lexical_analyser):
     global codeGenerator
     if lexical_analyser.isKeyword("true"):
         lexical_analyser.acceptKeyword("true")
-        codeGenerator.addUnite(empiler(1,False))
+        codeGenerator.addUnite(empiler(1, False))
         logger.debug("boolean true value")
 
     else:
         logger.debug("boolean false value")
         lexical_analyser.acceptKeyword("false")
-        codeGenerator.addUnite(empiler(0,False))
+        codeGenerator.addUnite(empiler(0, False))
 
     return "boolean"
 
@@ -553,18 +589,26 @@ def es(lexical_analyser):
         lexical_analyser.acceptCharacter("(")
         ident = lexical_analyser.acceptIdentifier()
         lexical_analyser.acceptCharacter(")")
-        if(codeGenerator.isSymbolTypeBool(ident)):
-            raise AnaSynException("Type mismatch. Did not expected : integer")
-        codeGenerator.addUnite(empiler(ident,True))
+        if(codeGenerator.isOperation()):
+            if(codeGenerator.isSymbolTypeBool(ident)):
+                raise AnaSynException(
+                    "Type mismatch. Did not expected : integer")
+            codeGenerator.addUnite(empilerAd(ident, True))
+        else:
+            if(codeGenerator.isSymbolTypeBool(ident)):
+                raise AnaSynException(
+                    "Type mismatch. Did not expected : integer")
+            codeGenerator.addUnite(empiler(ident, True))
         codeGenerator.addUnite(get())
         logger.debug("Call to get "+ident)
     elif lexical_analyser.isKeyword("put"):
-        
+
         lexical_analyser.acceptKeyword("put")
         lexical_analyser.acceptCharacter("(")
         type = expression(lexical_analyser)
-        if(type !='integer'):
-            raise AnaSynException("Type mismatch. Expected : integer got "+ type)
+        if(type != 'integer'):
+            raise AnaSynException(
+                "Type mismatch. Expected : integer got " + type)
         lexical_analyser.acceptCharacter(")")
         logger.debug("Call to put")
         codeGenerator.addUnite(put())
@@ -579,8 +623,8 @@ def boucle(lexical_analyser):
     lexical_analyser.acceptKeyword("while")
     ad1 = codeGenerator.getCO()
     type = expression(lexical_analyser)
-    if(type =='integer'):
-            raise AnaSynException("Type mismatch. Expected : bool")
+    if(type == 'integer'):
+        raise AnaSynException("Type mismatch. Expected : bool")
     lexical_analyser.acceptKeyword("loop")
     tze1 = tze()
     codeGenerator.addUnite(tze1)
@@ -597,9 +641,9 @@ def altern(lexical_analyser):
     global codeGenerator
     logger.debug("parsing if: ")
     lexical_analyser.acceptKeyword("if")
-    
+
     type = expression(lexical_analyser)
-    if(type =='integer'):
+    if(type == 'integer'):
         raise AnaSynException("Type mismatch. Expected : bool")
     jump = tze()
     codeGenerator.addUnite(jump)
@@ -611,9 +655,9 @@ def altern(lexical_analyser):
         codeGenerator.addUnite(jump2)
         jump.setAd(codeGenerator.getCO())
         suiteInstr(lexical_analyser)
-        jump=jump2
+        jump = jump2
     jump.setAd(codeGenerator.getCO())
-    
+
     lexical_analyser.acceptKeyword("end")
     logger.debug("end of if")
 
@@ -623,6 +667,7 @@ def retour(lexical_analyser):
     logger.debug("parsing return instruction")
     lexical_analyser.acceptKeyword("return")
     expression(lexical_analyser)
+    codeGenerator.addUnite(retourFonct())
 
 
 ########################################################################
@@ -684,7 +729,9 @@ def main():
 
     if args.show_ident_table:
         print("------ IDENTIFIER TABLE ------")
-        print(str(codeGenerator.getSymboleTable()))
+        for symbole in codeGenerator.getSymboleTable().values():
+            # print(symbole)
+            print("'"+str(symbole.getIdent())+"': "+str(symbole.getAdresse()))
         print("------ END OF IDENTIFIER TABLE ------")
 
     if outputFilename != "":
@@ -696,16 +743,17 @@ def main():
     else:
         output_file = sys.stdout
 
-    for unite in codeGenerator.compilationUnits:
-        print(""+unite.__class__.__name__)
-        if unite.__class__.__name__ == 'OperationGenerator':
-            for u in unite.compilationUnits:
-                print("- "+u.__class__.__name__)
+    # for unite in codeGenerator.compilationUnits:
+    #     print(""+unite.__class__.__name__)
+    #     if unite.__class__.__name__ == 'OperationGenerator':
+    #         for u in unite.compilationUnits:
+    #             print("- "+u.__class__.__name__)
 
     # Outputs the generated code to a file
     instrIndex = 0
     while instrIndex < len(codeGenerator.compilationUnits):
-        output_file.write("%s\n" % str(codeGenerator.get_instruction_at_index(instrIndex)))
+        output_file.write("%s\n" % str(
+            codeGenerator.get_instruction_at_index(instrIndex)))
         instrIndex += 1
 
     if outputFilename != "":
