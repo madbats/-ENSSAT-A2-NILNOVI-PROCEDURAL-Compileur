@@ -2,12 +2,13 @@
 // Programme correct
 //  M. Guyomard
 //
-//    Boucles imbriquees
-//   doit afficher 4 fois : 
-//>1
-//>2
-//>3
-//>4
+//  procedure avec parametres
+//    doit demander un nombre 'a' puis afficher
+//
+//? a
+//> a+1
+//> a
+//> a+1
 //
 //------------------------------------------------------
 procedure pp is

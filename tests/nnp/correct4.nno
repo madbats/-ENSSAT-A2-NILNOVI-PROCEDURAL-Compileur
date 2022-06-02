@@ -1,6 +1,11 @@
 //----------------------------------------------------
 // Programme correct
 //
+//  fonction recursive
+//    doit afficher
+//
+//>6
+//
 //------------------------------------------------------
 procedure pp is
   function fa(n : in integer) return integer is
