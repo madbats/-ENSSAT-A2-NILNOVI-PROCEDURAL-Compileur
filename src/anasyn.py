@@ -18,14 +18,18 @@ codeGenerator = CodeGenerator()
 operationGenerator = None
 DEBUG = False
 LOGGING_LEVEL = logging.DEBUG
-
+lines = []
+lineNumber = 0
 
 class AnaSynException(Exception):
-    def __init__(self, value):
+    def __init__(self, value,line,number):
         self.value = value
+        self.line = "ln:"+str(number+1)+":: "+line+""
+
+
 
     def __str__(self):
-        return repr(self.value)
+        return ("\n\t\033[93m"+self.value+"\033[93m\n\t\t\033[91m"+self.line+"\033[91m")
 
 ########################################################################
 # Syntactical Diagrams
@@ -33,14 +37,15 @@ class AnaSynException(Exception):
 
 
 def program(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     specifProgPrinc(lexical_analyser)
     lexical_analyser.acceptKeyword("is")
+    lineNumber +=1
     corpsProgPrinc(lexical_analyser)
 
 
 def specifProgPrinc(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     lexical_analyser.acceptKeyword("procedure")
 
     ident = lexical_analyser.acceptIdentifier()
@@ -48,7 +53,7 @@ def specifProgPrinc(lexical_analyser):
 
 
 def corpsProgPrinc(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     codeGenerator.addUnite(debutProg())
     if not lexical_analyser.isKeyword("begin"):
         logger.debug("Parsing declarations")
@@ -56,25 +61,26 @@ def corpsProgPrinc(lexical_analyser):
         partieDecla(lexical_analyser)
         logger.debug("End of declarations")
     lexical_analyser.acceptKeyword("begin")
-
+    lineNumber +=1
     if not lexical_analyser.isKeyword("end"):
         logger.debug("Parsing instructions")
         suiteInstr(lexical_analyser)
         logger.debug("End of instructions")
 
     lexical_analyser.acceptKeyword("end")
+    lineNumber +=1
     lexical_analyser.acceptFel()
     codeGenerator.addUnite(finProg())
     logger.debug("End of program")
 
 
 def partieDecla(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     if lexical_analyser.isKeyword("procedure") or lexical_analyser.isKeyword("function"):
         tra1 = tra()
         codeGenerator.addUnite(tra1)
         listeDeclaOp(lexical_analyser)
-        tra1.setAd(codeGenerator.getCO()-1)
+        tra1.setAd(codeGenerator.getCO())
         if not lexical_analyser.isKeyword("begin"):
             listeDeclaVar(lexical_analyser)
     else:
@@ -82,15 +88,16 @@ def partieDecla(lexical_analyser):
 
 
 def listeDeclaOp(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     declaOp(lexical_analyser)
     lexical_analyser.acceptCharacter(";")
+    lineNumber +=1
     if lexical_analyser.isKeyword("procedure") or lexical_analyser.isKeyword("function"):
-        listeDeclaOp(lexical_analyser)
-
+        return 1 + listeDeclaOp(lexical_analyser)
+    return 1
 
 def declaOp(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     operationGenerator = OperationGenerator(copy(codeGenerator))
 
     codeGenerator = operationGenerator
@@ -105,7 +112,7 @@ def declaOp(lexical_analyser):
 
 
 def procedure(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     lexical_analyser.acceptKeyword("procedure")
     ident = lexical_analyser.acceptIdentifier()
     logger.debug("Name of procedure : "+ident)
@@ -114,12 +121,14 @@ def procedure(lexical_analyser):
     partieFormelle(lexical_analyser)
 
     lexical_analyser.acceptKeyword("is")
+    lineNumber +=1
     corpsProc(lexical_analyser)
     codeGenerator.addUnite(retourProc())
+    proc.setSymbols(copy(codeGenerator.symboleTable))
 
 
 def fonction(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     lexical_analyser.acceptKeyword("function")
     ident = lexical_analyser.acceptIdentifier()
     logger.debug("Name of function : "+ident)
@@ -131,29 +140,32 @@ def fonction(lexical_analyser):
     ret = nnpType(lexical_analyser)
     func.setReturnType(ret)
     lexical_analyser.acceptKeyword("is")
+    lineNumber +=1
     corpsFonct(lexical_analyser)
-
+    func.setSymbols(copy(codeGenerator.symboleTable))
 
 def corpsProc(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     if not lexical_analyser.isKeyword("begin"):
         partieDeclaProc(lexical_analyser)
     lexical_analyser.acceptKeyword("begin")
     suiteInstr(lexical_analyser)
     lexical_analyser.acceptKeyword("end")
+    lineNumber +=1
 
 
 def corpsFonct(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     if not lexical_analyser.isKeyword("begin"):
         partieDeclaProc(lexical_analyser)
     lexical_analyser.acceptKeyword("begin")
     suiteInstrNonVide(lexical_analyser)
     lexical_analyser.acceptKeyword("end")
+    lineNumber +=1
 
 
 def partieFormelle(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     lexical_analyser.acceptCharacter("(")
     codeGenerator.toggleParamState()
     if not lexical_analyser.isCharacter(")"):
@@ -163,15 +175,16 @@ def partieFormelle(lexical_analyser):
 
 
 def listeSpecifFormelles(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     specif(lexical_analyser)
     if not lexical_analyser.isCharacter(")"):
         lexical_analyser.acceptCharacter(";")
+        lineNumber +=1
         listeSpecifFormelles(lexical_analyser)
 
 
 def specif(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     nb = listeIdent(lexical_analyser)
     lexical_analyser.acceptCharacter(":")
     if lexical_analyser.isKeyword("in"):
@@ -182,7 +195,7 @@ def specif(lexical_analyser):
 
 
 def mode(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     lexical_analyser.acceptKeyword("in")
     if lexical_analyser.isKeyword("out"):
         lexical_analyser.acceptKeyword("out")
@@ -194,7 +207,7 @@ def mode(lexical_analyser):
 
 
 def nnpType(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     if lexical_analyser.isKeyword("integer"):
         lexical_analyser.acceptKeyword("integer")
         codeGenerator.setType(False)
@@ -209,33 +222,34 @@ def nnpType(lexical_analyser):
         logger.error("Unknown type found <" +
                      lexical_analyser.get_value() + ">!")
         raise AnaSynException("Unknown type found <" +
-                              lexical_analyser.get_value() + ">!")
+                              lexical_analyser.get_value() + ">!",lines[lineNumber],lineNumber)
 
 
 def partieDeclaProc(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     listeDeclaVar(lexical_analyser)
 
 
 def listeDeclaVar(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     declaVar(lexical_analyser)
     if lexical_analyser.isIdentifier():
         listeDeclaVar(lexical_analyser)
 
 
 def declaVar(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     nb = listeIdent(lexical_analyser)
     lexical_analyser.acceptCharacter(":")
     logger.debug("now parsing type...")
     codeGenerator.addUnite(reserver(nb))
     nnpType(lexical_analyser)
     lexical_analyser.acceptCharacter(";")
+    lineNumber +=1
 
 
 def listeIdent(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     ident = lexical_analyser.acceptIdentifier()
     logger.debug("identifier found: "+str(ident))
     codeGenerator.addVariable(ident)
@@ -247,21 +261,22 @@ def listeIdent(lexical_analyser):
 
 
 def suiteInstrNonVide(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     instr(lexical_analyser)
     if lexical_analyser.isCharacter(";"):
         lexical_analyser.acceptCharacter(";")
+        lineNumber +=1
         suiteInstrNonVide(lexical_analyser)
 
 
 def suiteInstr(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     if not lexical_analyser.isKeyword("end"):
         suiteInstrNonVide(lexical_analyser)
 
 
 def instr(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     if lexical_analyser.isKeyword("while"):
         boucle(lexical_analyser)
     elif lexical_analyser.isKeyword("if"):
@@ -282,7 +297,7 @@ def instr(lexical_analyser):
                         codeGenerator.addUnite(empilerParam(ident))
                     else:
                         raise AnaSynException(
-                            "%s is not set to 'out' but is beeing modified" % ident)
+                            "%s is not set to 'out' but is beeing modified" % ident,lines[lineNumber],lineNumber)
                 else:
                     codeGenerator.addUnite(empilerAd(ident))
             else:
@@ -293,7 +308,7 @@ def instr(lexical_analyser):
             if((codeGenerator.isSymbolTypeBool(ident) and type == 'integer') or
                     (not codeGenerator.isSymbolTypeBool(ident) and type != 'integer')):
                 raise AnaSynException(
-                    "Type mismatch. Did not expected : "+type)
+                    "Type mismatch. Did not expected : "+type,lines[lineNumber],lineNumber)
             codeGenerator.addUnite(affectation())
             logger.debug("parsed affectation")
         elif lexical_analyser.isCharacter("("):
@@ -305,24 +320,24 @@ def instr(lexical_analyser):
             expected = codeGenerator.getSymboleTable()[ident].nombreParam()
             if(nombre != expected):
                 raise AnaSynException(
-                    "%s Expected %d parameters but got %d" % (str(ident), expected, nombre))
+                    "%s Expected %d parameters but got %d" % (str(ident), expected, nombre),lines[lineNumber],lineNumber)
 
             codeGenerator.addUnite(traStat(ident, nombre))
             lexical_analyser.acceptCharacter(")")
             logger.debug("parsed procedure call")
         else:
             logger.error("Expecting procedure call or affectation!")
-            raise AnaSynException("Expecting procedure call or affectation!")
+            raise AnaSynException("Expecting procedure call or affectation!",lines[lineNumber],lineNumber)
 
     else:
         logger.error("Unknown Instruction <" +
                      lexical_analyser.get_value() + ">!")
         raise AnaSynException("Unknown Instruction <" +
-                              lexical_analyser.get_value() + ">!")
+                              lexical_analyser.get_value() + ">!",lines[lineNumber],lineNumber)
 
 
 def listePe(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     expression(lexical_analyser)
     if lexical_analyser.isCharacter(","):
         lexical_analyser.acceptCharacter(",")
@@ -331,7 +346,7 @@ def listePe(lexical_analyser):
 
 
 def expression(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     logger.debug("parsing expression: " + str(lexical_analyser.get_value()))
 
     type = exp1(lexical_analyser)
@@ -344,7 +359,7 @@ def expression(lexical_analyser):
 
 
 def exp1(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     logger.debug("parsing exp1")
 
     type = exp2(lexical_analyser)
@@ -357,7 +372,7 @@ def exp1(lexical_analyser):
 
 
 def exp2(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     logger.debug("parsing exp2")
     op = None
     type = exp3(lexical_analyser)
@@ -379,7 +394,7 @@ def exp2(lexical_analyser):
 
 
 def opRel(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     logger.debug("parsing relationnal operator: " +
                  lexical_analyser.get_value())
 
@@ -404,11 +419,11 @@ def opRel(lexical_analyser):
     else:
         msg = "Unknown relationnal operator <" + lexical_analyser.get_value() + ">!"
         logger.error(msg)
-        raise AnaSynException(msg)
+        raise AnaSynException(msg,lines[lineNumber],lineNumber)
 
 
 def exp3(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     logger.debug("parsing exp3")
     type = exp4(lexical_analyser)
 
@@ -423,7 +438,7 @@ def exp3(lexical_analyser):
 
 
 def opAdd(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     logger.debug("parsing additive operator: " + lexical_analyser.get_value())
     if lexical_analyser.isCharacter("+"):
         lexical_analyser.acceptCharacter("+")
@@ -434,11 +449,11 @@ def opAdd(lexical_analyser):
     else:
         msg = "Unknown additive operator <" + lexical_analyser.get_value() + ">!"
         logger.error(msg)
-        raise AnaSynException(msg)
+        raise AnaSynException(msg,lines[lineNumber],lineNumber)
 
 
 def exp4(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     logger.debug("parsing exp4")
     op = None
     type = prim(lexical_analyser)
@@ -451,7 +466,7 @@ def exp4(lexical_analyser):
 
 
 def opMult(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     logger.debug("parsing multiplicative operator: " +
                  lexical_analyser.get_value())
     if lexical_analyser.isCharacter("*"):
@@ -463,11 +478,11 @@ def opMult(lexical_analyser):
     else:
         msg = "Unknown multiplicative operator <" + lexical_analyser.get_value() + ">!"
         logger.error(msg)
-        raise AnaSynException(msg)
+        raise AnaSynException(msg,lines[lineNumber],lineNumber)
 
 
 def prim(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     logger.debug("parsing prim")
     op = None
     if lexical_analyser.isCharacter("+") or lexical_analyser.isCharacter("-") or lexical_analyser.isKeyword("not"):
@@ -479,7 +494,7 @@ def prim(lexical_analyser):
 
 
 def opUnaire(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     logger.debug("parsing unary operator: " + lexical_analyser.get_value())
     if lexical_analyser.isCharacter("+"):
         lexical_analyser.acceptCharacter("+")
@@ -494,11 +509,11 @@ def opUnaire(lexical_analyser):
     else:
         msg = "Unknown additive operator <" + lexical_analyser.get_value() + ">!"
         logger.error(msg)
-        raise AnaSynException(msg)
+        raise AnaSynException(msg,lines[lineNumber],lineNumber)
 
 
 def elemPrim(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     logger.debug("parsing elemPrim: " + str(lexical_analyser.get_value()))
     type = None
     if lexical_analyser.isCharacter("("):
@@ -518,7 +533,7 @@ def elemPrim(lexical_analyser):
             expected = codeGenerator.getSymboleTable()[ident].nombreParam()
             if(nbParam != expected):
                 raise AnaSynException(
-                    "%s Expected %d parameters but got %d" % (str(ident), expected, nbParam))
+                    "%s Expected %d parameters but got %d" % (str(ident), expected, nbParam),lines[lineNumber],lineNumber)
 
             lexical_analyser.acceptCharacter(")")
             logger.debug("parsed procedure call")
@@ -542,15 +557,15 @@ def elemPrim(lexical_analyser):
                 type = 'integer'
         else:
             logger.error("Procedures cannot return values")
-            raise AnaSynException("Procedures cannot return values!")
+            raise AnaSynException("Procedures cannot return values!",lines[lineNumber],lineNumber)
     else:
         logger.error("Unknown Value!")
-        raise AnaSynException("Unknown Value!")
+        raise AnaSynException("Unknown Value!",lines[lineNumber],lineNumber)
     return type
 
 
 def valeur(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     if lexical_analyser.isInteger():
         entier = lexical_analyser.acceptInteger()
         logger.debug("integer value: " + str(entier))
@@ -563,11 +578,11 @@ def valeur(lexical_analyser):
     else:
         logger.error("Unknown Value! Expecting an integer or a boolean value!")
         raise AnaSynException(
-            "Unknown Value ! Expecting an integer or a boolean value!")
+            "Unknown Value ! Expecting an integer or a boolean value!",lines[lineNumber],lineNumber)
 
 
 def valBool(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     if lexical_analyser.isKeyword("true"):
         lexical_analyser.acceptKeyword("true")
         codeGenerator.addUnite(empiler(1, False))
@@ -582,7 +597,7 @@ def valBool(lexical_analyser):
 
 
 def es(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     logger.debug("parsing E/S instruction: " + lexical_analyser.get_value())
     if lexical_analyser.isKeyword("get"):
         lexical_analyser.acceptKeyword("get")
@@ -592,12 +607,12 @@ def es(lexical_analyser):
         if(codeGenerator.isOperation()):
             if(codeGenerator.isSymbolTypeBool(ident)):
                 raise AnaSynException(
-                    "Type mismatch. Did not expected : integer")
+                    "Type mismatch. Did not expected : integer",lines[lineNumber],lineNumber)
             codeGenerator.addUnite(empilerAd(ident, True))
         else:
             if(codeGenerator.isSymbolTypeBool(ident)):
                 raise AnaSynException(
-                    "Type mismatch. Did not expected : integer")
+                    "Type mismatch. Did not expected : integer",lines[lineNumber],lineNumber)
             codeGenerator.addUnite(empiler(ident, True))
         codeGenerator.addUnite(get())
         logger.debug("Call to get "+ident)
@@ -608,28 +623,29 @@ def es(lexical_analyser):
         type = expression(lexical_analyser)
         if(type != 'integer'):
             raise AnaSynException(
-                "Type mismatch. Expected : integer got " + type)
+                "Type mismatch. Expected : integer got " + type,lines[lineNumber],lineNumber)
         lexical_analyser.acceptCharacter(")")
         logger.debug("Call to put")
         codeGenerator.addUnite(put())
     else:
         logger.error("Unknown E/S instruction!")
-        raise AnaSynException("Unknown E/S instruction!")
+        raise AnaSynException("Unknown E/S instruction!",lines[lineNumber],lineNumber)
 
 
 def boucle(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     logger.debug("parsing while loop: ")
     lexical_analyser.acceptKeyword("while")
     ad1 = codeGenerator.getCO()
     type = expression(lexical_analyser)
     if(type == 'integer'):
-        raise AnaSynException("Type mismatch. Expected : bool")
+        raise AnaSynException("Type mismatch. Expected : bool",lines[lineNumber],lineNumber)
     lexical_analyser.acceptKeyword("loop")
     tze1 = tze()
     codeGenerator.addUnite(tze1)
     suiteInstr(lexical_analyser)
     lexical_analyser.acceptKeyword("end")
+    lineNumber +=1
     tra1 = tra()
     codeGenerator.addUnite(tra1)
     tra1.setAd(ad1)
@@ -638,13 +654,13 @@ def boucle(lexical_analyser):
 
 
 def altern(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     logger.debug("parsing if: ")
     lexical_analyser.acceptKeyword("if")
 
     type = expression(lexical_analyser)
     if(type == 'integer'):
-        raise AnaSynException("Type mismatch. Expected : bool")
+        raise AnaSynException("Type mismatch. Expected : bool",lines[lineNumber],lineNumber)
     jump = tze()
     codeGenerator.addUnite(jump)
     lexical_analyser.acceptKeyword("then")
@@ -659,20 +675,54 @@ def altern(lexical_analyser):
     jump.setAd(codeGenerator.getCO())
 
     lexical_analyser.acceptKeyword("end")
+    lineNumber +=1
     logger.debug("end of if")
 
 
 def retour(lexical_analyser):
-    global codeGenerator
+    global codeGenerator, lines, lineNumber
     logger.debug("parsing return instruction")
     lexical_analyser.acceptKeyword("return")
     expression(lexical_analyser)
+    lineNumber +=1
     codeGenerator.addUnite(retourFonct())
 
+def displaySymboleTable(symboles,tab=0,parent=None):
+    for symbole in symboles.values():
+        msg = ""
+        for t in range(0,tab):
+            msg += "\t"
+        if (symbole.isOperation()):
+            
+            msg += str(symbole.getIdent())+"("
+            for p in symbole.params :
+                msg += " "+str(p.getIdent())+" in"
+                if p.isOut():
+                    msg += " out"
+                if p.isBool():
+                    msg += " boolean"
+                else:
+                    msg += " integer"
+                msg += ';'
+            if(msg[-1]==';'):
+                msg = msg.rstrip(msg[-1])
+
+            msg +=")"
+            
+        elif not symbole.isOperation():
+            msg += "'"+str(symbole.getIdent())+"'"
+            if symbole.isBool():
+                msg += " boolean"
+            else:
+                msg += " integer"
+        msg +=" at "+str(symbole.getAdresse())
+        print(msg)
+        if (symbole.isOperation() and symbole.getIdent()!=parent):
+            displaySymboleTable(symbole.symboles,tab+1,symbole.getIdent())
 
 ########################################################################
 def main():
-
+    global lines
     parser = argparse.ArgumentParser(
         description='Do the syntactical analysis of a NNP program.')
     parser.add_argument('inputfile', type=str, nargs=1,
@@ -715,23 +765,27 @@ def main():
         True
 
     lexical_analyser = analex.LexicalAnalyser()
-
+    lines = []
     lineIndex = 0
+    lineNumber = 0
     for line in f:
         line = line.rstrip('\r\n')
+        
         lexical_analyser.analyse_line(lineIndex, line)
+        if(len(line)>0):
+            if (line[0]!='/'):
+                lines.append(line)
         lineIndex = lineIndex + 1
     f.close()
-
+    for i in range(0,lineNumber):
+        print("ln"+str(i+1)+" :: "+lines[i])
     # launch the analysis of the program
     lexical_analyser.init_analyser()
     program(lexical_analyser)
 
     if args.show_ident_table:
         print("------ IDENTIFIER TABLE ------")
-        for symbole in codeGenerator.getSymboleTable().values():
-            # print(symbole)
-            print("'"+str(symbole.getIdent())+"': "+str(symbole.getAdresse()))
+        displaySymboleTable(codeGenerator.getSymboleTable())
         print("------ END OF IDENTIFIER TABLE ------")
 
     if outputFilename != "":
@@ -742,12 +796,6 @@ def main():
             return
     else:
         output_file = sys.stdout
-
-    # for unite in codeGenerator.compilationUnits:
-    #     print(""+unite.__class__.__name__)
-    #     if unite.__class__.__name__ == 'OperationGenerator':
-    #         for u in unite.compilationUnits:
-    #             print("- "+u.__class__.__name__)
 
     # Outputs the generated code to a file
     instrIndex = 0

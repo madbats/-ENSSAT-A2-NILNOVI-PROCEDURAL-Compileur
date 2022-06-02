@@ -52,6 +52,10 @@ class Opperation(Symbole):
         self.ident = ident
         self.adresse = adresse
         self.params = []
+        self.symboles = []
+
+    def setSymbols(self,symboles):
+        self.symboles = symboles
 
     def addParam(self, par):
         self.params.append(par)
@@ -91,7 +95,6 @@ class Parametre(Symbole):
 class CodeGenerator():
 
     def __init__(self):
-        self.compilationUnits = []
         self.symboleTable = dict()
         self.compilationUnits = []
         self.coDecalage = 0
@@ -350,8 +353,7 @@ class empilerAd(CompilationUnite):
         self.params.append(n)
 
     def stringify(self, symbols):
-        print("--"+self.params[0]+": " +
-              str(symbols[self.params[0]].getAdresse()))
+        
         unite = "empilerAd("
         unite += str(symbols[self.params[0]].getAdresse())
         unite += ")"
