@@ -10,7 +10,7 @@ procedure pp is
     if n = 0 then
       put(1)
     else
-      put(n*fa(n-1))
+      put(n*fa(n-1))   //mess. erreur attendu ici
     end
   end;
 begin

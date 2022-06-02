@@ -1,7 +1,7 @@
 //----------------------------------------------------
 // Programme incorrect
 //
-//	retour boolean d'une function 
+//	afficher retour boolean d'une function 
 //
 //------------------------------------------------------
 procedure pp is
@@ -10,5 +10,5 @@ procedure pp is
     return n
   end;
 begin
-  put(isTrue(3))
+  put(isTrue(3))   //mess. erreur attendu ici
 end.

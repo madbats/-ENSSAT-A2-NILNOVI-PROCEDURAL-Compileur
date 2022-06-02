@@ -141,9 +141,12 @@ def fonction(lexical_analyser):
 
     lexical_analyser.acceptKeyword("return")
     ret = nnpType(lexical_analyser)
+
+    # definie le type de retour de l'opération
     func.setReturnType(ret)
     lexical_analyser.acceptKeyword("is")
     lineNumber +=1
+    
     corpsFonct(lexical_analyser)
     func.setSymbols(copy(codeGenerator.symboleTable))
 
@@ -195,8 +198,8 @@ def specif(lexical_analyser):
     nb = listeIdent(lexical_analyser)
     lexical_analyser.acceptCharacter(":")
     if lexical_analyser.isKeyword("in"):
-        isOut = mode(lexical_analyser)
-        codeGenerator.setMode((isOut == 'out'))
+        m = mode(lexical_analyser)
+        codeGenerator.setParamMode(m)
 
     nnpType(lexical_analyser)
 
@@ -207,7 +210,7 @@ def mode(lexical_analyser):
     if lexical_analyser.isKeyword("out"):
         lexical_analyser.acceptKeyword("out")
         logger.debug("in out parameter")
-        return 'out'
+        return 'in out'
     else:
         logger.debug("in parameter")
         return 'in'
@@ -217,12 +220,12 @@ def nnpType(lexical_analyser):
     global codeGenerator, lines, lineNumber
     if lexical_analyser.isKeyword("integer"):
         lexical_analyser.acceptKeyword("integer")
-        codeGenerator.setType(False)
+        codeGenerator.setVariableType("integer")
         logger.debug("integer type")
         return 'integer'
     elif lexical_analyser.isKeyword("boolean"):
         lexical_analyser.acceptKeyword("boolean")
-        codeGenerator.setType(True)
+        codeGenerator.setVariableType("boolean")
         logger.debug("boolean type")
         return 'boolean'
     else:
@@ -788,8 +791,7 @@ def main():
                 lines.append(line)
         lineIndex = lineIndex + 1
     f.close()
-    for i in range(0,lineNumber):
-        print("ln"+str(i+1)+" :: "+lines[i])
+    
     # launch the analysis of the program
     lexical_analyser.init_analyser()
     program(lexical_analyser)

@@ -10,5 +10,5 @@ procedure pp is
     return n
   end;
 begin
-  put(isTrue())
+  put(isTrue())   //mess. erreur attendu ici
 end.
