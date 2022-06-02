@@ -102,7 +102,7 @@ class CodeGenerator():
         # print(unite.__class__.__name__)
         self.compilationUnits.append(unite)
         if unite.__class__.__name__ == "OperationGenerator":
-            self.coDecalage += len(unite.compilationUnits)
+            self.coDecalage += len(unite.compilationUnits)-1
 
     def addVariable(self, symbol):
         self.listeIdent.append(Symbole(symbol, self.compteurVariable + 2))
