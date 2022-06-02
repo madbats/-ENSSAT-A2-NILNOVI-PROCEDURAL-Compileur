@@ -59,16 +59,18 @@ def corpsProgPrinc(lexical_analyser):
         logger.debug("Parsing declarations")
 
         partieDecla(lexical_analyser)
+        
         logger.debug("End of declarations")
     lexical_analyser.acceptKeyword("begin")
     lineNumber +=1
+    
     if not lexical_analyser.isKeyword("end"):
         logger.debug("Parsing instructions")
         suiteInstr(lexical_analyser)
         logger.debug("End of instructions")
 
     lexical_analyser.acceptKeyword("end")
-    lineNumber +=1
+    
     lexical_analyser.acceptFel()
     codeGenerator.addUnite(finProg())
     logger.debug("End of program")
@@ -84,6 +86,7 @@ def partieDecla(lexical_analyser):
         if not lexical_analyser.isKeyword("begin"):
             listeDeclaVar(lexical_analyser)
     else:
+        
         listeDeclaVar(lexical_analyser)
 
 
@@ -91,15 +94,14 @@ def listeDeclaOp(lexical_analyser):
     global codeGenerator, lines, lineNumber
     declaOp(lexical_analyser)
     lexical_analyser.acceptCharacter(";")
-    lineNumber +=1
+    
     if lexical_analyser.isKeyword("procedure") or lexical_analyser.isKeyword("function"):
-        return 1 + listeDeclaOp(lexical_analyser)
-    return 1
+        listeDeclaOp(lexical_analyser)
 
 def declaOp(lexical_analyser):
     global codeGenerator, lines, lineNumber
     operationGenerator = OperationGenerator(copy(codeGenerator))
-
+    
     codeGenerator = operationGenerator
     if lexical_analyser.isKeyword("procedure"):
         procedure(lexical_analyser)
@@ -122,6 +124,7 @@ def procedure(lexical_analyser):
 
     lexical_analyser.acceptKeyword("is")
     lineNumber +=1
+    
     corpsProc(lexical_analyser)
     codeGenerator.addUnite(retourProc())
     proc.setSymbols(copy(codeGenerator.symboleTable))
@@ -149,6 +152,8 @@ def corpsProc(lexical_analyser):
     if not lexical_analyser.isKeyword("begin"):
         partieDeclaProc(lexical_analyser)
     lexical_analyser.acceptKeyword("begin")
+    lineNumber +=1
+    
     suiteInstr(lexical_analyser)
     lexical_analyser.acceptKeyword("end")
     lineNumber +=1
@@ -159,6 +164,8 @@ def corpsFonct(lexical_analyser):
     if not lexical_analyser.isKeyword("begin"):
         partieDeclaProc(lexical_analyser)
     lexical_analyser.acceptKeyword("begin")
+    lineNumber +=1
+    
     suiteInstrNonVide(lexical_analyser)
     lexical_analyser.acceptKeyword("end")
     lineNumber +=1
@@ -179,7 +186,7 @@ def listeSpecifFormelles(lexical_analyser):
     specif(lexical_analyser)
     if not lexical_analyser.isCharacter(")"):
         lexical_analyser.acceptCharacter(";")
-        lineNumber +=1
+        
         listeSpecifFormelles(lexical_analyser)
 
 
@@ -233,6 +240,7 @@ def partieDeclaProc(lexical_analyser):
 def listeDeclaVar(lexical_analyser):
     global codeGenerator, lines, lineNumber
     declaVar(lexical_analyser)
+    
     if lexical_analyser.isIdentifier():
         listeDeclaVar(lexical_analyser)
 
@@ -263,9 +271,10 @@ def listeIdent(lexical_analyser):
 def suiteInstrNonVide(lexical_analyser):
     global codeGenerator, lines, lineNumber
     instr(lexical_analyser)
+    
     if lexical_analyser.isCharacter(";"):
         lexical_analyser.acceptCharacter(";")
-        lineNumber +=1
+        
         suiteInstrNonVide(lexical_analyser)
 
 
@@ -277,6 +286,7 @@ def suiteInstr(lexical_analyser):
 
 def instr(lexical_analyser):
     global codeGenerator, lines, lineNumber
+    
     if lexical_analyser.isKeyword("while"):
         boucle(lexical_analyser)
     elif lexical_analyser.isKeyword("if"):
@@ -334,6 +344,7 @@ def instr(lexical_analyser):
                      lexical_analyser.get_value() + ">!")
         raise AnaSynException("Unknown Instruction <" +
                               lexical_analyser.get_value() + ">!",lines[lineNumber],lineNumber)
+    lineNumber +=1
 
 
 def listePe(lexical_analyser):
@@ -643,9 +654,9 @@ def boucle(lexical_analyser):
     lexical_analyser.acceptKeyword("loop")
     tze1 = tze()
     codeGenerator.addUnite(tze1)
+    
     suiteInstr(lexical_analyser)
     lexical_analyser.acceptKeyword("end")
-    lineNumber +=1
     tra1 = tra()
     codeGenerator.addUnite(tra1)
     tra1.setAd(ad1)
@@ -664,9 +675,12 @@ def altern(lexical_analyser):
     jump = tze()
     codeGenerator.addUnite(jump)
     lexical_analyser.acceptKeyword("then")
+    lineNumber +=1
+    
     suiteInstr(lexical_analyser)
     if lexical_analyser.isKeyword("else"):
         lexical_analyser.acceptKeyword("else")
+        lineNumber +=1
         jump2 = tra()
         codeGenerator.addUnite(jump2)
         jump.setAd(codeGenerator.getCO())
@@ -675,7 +689,6 @@ def altern(lexical_analyser):
     jump.setAd(codeGenerator.getCO())
 
     lexical_analyser.acceptKeyword("end")
-    lineNumber +=1
     logger.debug("end of if")
 
 
@@ -684,7 +697,6 @@ def retour(lexical_analyser):
     logger.debug("parsing return instruction")
     lexical_analyser.acceptKeyword("return")
     expression(lexical_analyser)
-    lineNumber +=1
     codeGenerator.addUnite(retourFonct())
 
 def displaySymboleTable(symboles,tab=0,parent=None):
@@ -767,7 +779,6 @@ def main():
     lexical_analyser = analex.LexicalAnalyser()
     lines = []
     lineIndex = 0
-    lineNumber = 0
     for line in f:
         line = line.rstrip('\r\n')
         
