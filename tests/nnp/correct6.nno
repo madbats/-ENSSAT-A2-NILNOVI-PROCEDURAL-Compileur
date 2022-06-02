@@ -1,0 +1,26 @@
+//----------------------------------------------------
+// Programme correct
+//
+// Declaration de deux operations
+// doit afficher : 
+//
+//> 7
+//
+//------------------------------------------------------
+procedure pp is
+  procedure p(v : in integer; i : in out integer) is
+  begin
+    i := i + v
+  end;
+  procedure q(v : in integer; i : in out integer) is
+  begin
+    i := i * v
+  end;
+  a : integer;
+begin
+  a := 5;
+  p(2,a);
+  put(a);
+  q(2,a);
+  put(a)
+end.
