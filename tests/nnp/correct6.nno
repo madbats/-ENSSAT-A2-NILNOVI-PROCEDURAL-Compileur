@@ -5,7 +5,7 @@
 // doit afficher : 
 //
 //> 7
-//
+//> 14
 //------------------------------------------------------
 procedure pp is
   procedure p(v : in integer; i : in out integer) is

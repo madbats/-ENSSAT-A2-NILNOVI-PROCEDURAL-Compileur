@@ -1,7 +1,7 @@
 //----------------------------------------------------
 // Programme incorrect
 //
-//	afficher retour boolean d'une function 
+//	afficher boolean en retour d'une function 
 //
 //------------------------------------------------------
 procedure pp is

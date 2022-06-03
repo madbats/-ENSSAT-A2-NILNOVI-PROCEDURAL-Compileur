@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import primitives
+
 class Symbole():
     """Symbole dans la table des symboles"""
 
@@ -19,11 +21,11 @@ class Symbole():
 
     def isBool(self):
         """Retourne True si le symbole retourne un boolean"""
-        return self.type == "boolean"
+        return self.type == primitives.BOOLEAN
 
     def isInteger(self):
         """Retourne True si le symbole retourne un integer"""
-        return self.type == "integer"
+        return self.type == primitives.INTEGER
 
     def isParam(self):
         """Retourne True si le symbole est un parametre d'operation"""

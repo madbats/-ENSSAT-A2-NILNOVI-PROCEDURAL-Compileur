@@ -11,6 +11,7 @@ import re
 import logging
 
 import analex
+import primitives
 from codeGenerator import *
 
 logger = logging.getLogger('anasyn')
@@ -220,14 +221,14 @@ def nnpType(lexical_analyser):
     global codeGenerator, lines, lineNumber
     if lexical_analyser.isKeyword("integer"):
         lexical_analyser.acceptKeyword("integer")
-        codeGenerator.setVariableType("integer")
+        codeGenerator.setVariableType(primitives.INTEGER)
         logger.debug("integer type")
-        return 'integer'
+        return primitives.INTEGER
     elif lexical_analyser.isKeyword("boolean"):
         lexical_analyser.acceptKeyword("boolean")
-        codeGenerator.setVariableType("boolean")
+        codeGenerator.setVariableType(primitives.BOOLEAN)
         logger.debug("boolean type")
-        return 'boolean'
+        return primitives.BOOLEAN
     else:
         logger.error("Unknown type found <" +
                      lexical_analyser.get_value() + ">!")
@@ -304,9 +305,9 @@ def instr(lexical_analyser):
             # affectation
             # empiler(ident, true) --> adresse / empiler(ident, false) --> valeur
             if(codeGenerator.isOperation()):
-                param = codeGenerator.getSymboleTable()[ident]
-                if(param.isParam()):
-                    if(param.isOut()):
+                var = codeGenerator.getSymboleTable()[ident]
+                if(var.isParam()):
+                    if(var.isOut()):
                         codeGenerator.addUnite(empilerParam(ident))
                     else:
                         raise AnaSynException(
@@ -318,10 +319,9 @@ def instr(lexical_analyser):
 
             lexical_analyser.acceptSymbol(":=")
             type = expression(lexical_analyser)
-            if((codeGenerator.isSymbolTypeBool(ident) and type == 'integer') or
-                    (not codeGenerator.isSymbolTypeBool(ident) and type != 'integer')):
+            if codeGenerator.getSymboleTable()[ident].type != type:
                 raise AnaSynException(
-                    "Type mismatch. Did not expected : "+type,lines[lineNumber],lineNumber)
+                    "Type mismatch. Expected %s but got %s " %(codeGenerator.getSymboleTable()[ident].type,type),lines[lineNumber],lineNumber)
             codeGenerator.addUnite(affectation())
             logger.debug("parsed affectation")
         elif lexical_analyser.isCharacter("("):
@@ -367,7 +367,7 @@ def expression(lexical_analyser):
     if lexical_analyser.isKeyword("or"):
         lexical_analyser.acceptKeyword("or")
         exp1(lexical_analyser)
-        type = 'boolean'
+        type = primitives.BOOLEAN
         codeGenerator.addUnite(ou())
     return type
 
@@ -380,7 +380,7 @@ def exp1(lexical_analyser):
     if lexical_analyser.isKeyword("and"):
         lexical_analyser.acceptKeyword("and")
         exp2(lexical_analyser)
-        type = 'boolean'
+        type = primitives.BOOLEAN
         codeGenerator.addUnite(et())
     return type
 
@@ -396,13 +396,13 @@ def exp2(lexical_analyser):
             lexical_analyser.isSymbol(">="):
         op = opRel(lexical_analyser)
         exp3(lexical_analyser)
-        type = 'boolean'
+        type = primitives.BOOLEAN
     elif lexical_analyser.isSymbol("=") or \
             lexical_analyser.isSymbol("/="):
         op = opRel(lexical_analyser)
         exp3(lexical_analyser)
-        type = 'boolean'
-    if(not(op == None)):
+        type = primitives.BOOLEAN
+    if op != None :
         codeGenerator.addUnite(op)
     return type
 
@@ -444,9 +444,9 @@ def exp3(lexical_analyser):
     op = None
     if lexical_analyser.isCharacter("+") or lexical_analyser.isCharacter("-"):
         op = opAdd(lexical_analyser)
-        type = 'integer'
+        type = primitives.INTEGER
         exp4(lexical_analyser)
-    if(not(op == None)):
+    if op != None :
         codeGenerator.addUnite(op)
     return type
 
@@ -474,7 +474,7 @@ def exp4(lexical_analyser):
     if lexical_analyser.isCharacter("*") or lexical_analyser.isCharacter("/"):
         op = opMult(lexical_analyser)
         type = prim(lexical_analyser)
-    if(not(op == None)):
+    if op != None :
         codeGenerator.addUnite(op)
     return type
 
@@ -502,7 +502,7 @@ def prim(lexical_analyser):
     if lexical_analyser.isCharacter("+") or lexical_analyser.isCharacter("-") or lexical_analyser.isKeyword("not"):
         op = opUnaire(lexical_analyser)
     type = elemPrim(lexical_analyser)
-    if(not(op == None)):
+    if op != None :
         codeGenerator.addUnite(op)
     return type
 
@@ -538,8 +538,10 @@ def elemPrim(lexical_analyser):
         return valeur(lexical_analyser)
     elif lexical_analyser.isIdentifier():
         ident = lexical_analyser.acceptIdentifier()
-        if lexical_analyser.isCharacter("("):			# Appel fonct
+        if lexical_analyser.isCharacter("("):              # Appel opération
             lexical_analyser.acceptCharacter("(")
+            if not codeGenerator.getSymboleTable()[ident].isFunction():
+                raise AnaSynException("%s is not a function"%ident,lines[lineNumber],lineNumber)
             codeGenerator.addUnite(reserverBloc())
             nbParam = 0
             if not lexical_analyser.isCharacter(")"):
@@ -551,7 +553,6 @@ def elemPrim(lexical_analyser):
 
             lexical_analyser.acceptCharacter(")")
             logger.debug("parsed procedure call")
-            # codeGenerator.addUnite(tra(ident))
             logger.debug("Call to function: " + ident)
             codeGenerator.addUnite(traStat(ident, nbParam))
         else:
@@ -564,14 +565,7 @@ def elemPrim(lexical_analyser):
             else:
                 codeGenerator.addUnite(empiler(ident))
             codeGenerator.addUnite(valeurPile())
-        if(codeGenerator.isSymbolTypeFunction(ident) or not codeGenerator.isSymbolTypeOperation(ident)):
-            if (codeGenerator.isSymbolTypeBool(ident)):
-                type = 'boolean'
-            else:
-                type = 'integer'
-        else:
-            logger.error("Procedures cannot return values")
-            raise AnaSynException("Procedures cannot return values!",lines[lineNumber],lineNumber)
+        type = codeGenerator.getSymboleTable()[ident].type
     else:
         logger.error("Unknown Value!")
         raise AnaSynException("Unknown Value!",lines[lineNumber],lineNumber)
@@ -585,10 +579,10 @@ def valeur(lexical_analyser):
         logger.debug("integer value: " + str(entier))
         logger.debug("entier:"+str(entier))
         codeGenerator.addUnite(empiler(entier, False))
-        return "integer"
+        return primitives.INTEGER
     elif lexical_analyser.isKeyword("true") or lexical_analyser.isKeyword("false"):
-        vtype = valBool(lexical_analyser)
-        return vtype
+        valBool(lexical_analyser)
+        return primitives.BOOLEAN
     else:
         logger.error("Unknown Value! Expecting an integer or a boolean value!")
         raise AnaSynException(
@@ -601,13 +595,10 @@ def valBool(lexical_analyser):
         lexical_analyser.acceptKeyword("true")
         codeGenerator.addUnite(empiler(1, False))
         logger.debug("boolean true value")
-
     else:
         logger.debug("boolean false value")
         lexical_analyser.acceptKeyword("false")
         codeGenerator.addUnite(empiler(0, False))
-
-    return "boolean"
 
 
 def es(lexical_analyser):
@@ -618,15 +609,12 @@ def es(lexical_analyser):
         lexical_analyser.acceptCharacter("(")
         ident = lexical_analyser.acceptIdentifier()
         lexical_analyser.acceptCharacter(")")
+        if(codeGenerator.isSymbolTypeBool(ident)):
+                raise AnaSynException(
+                    "Type mismatch. Expected : integer",lines[lineNumber],lineNumber)
         if(codeGenerator.isOperation()):
-            if(codeGenerator.isSymbolTypeBool(ident)):
-                raise AnaSynException(
-                    "Type mismatch. Did not expected : integer",lines[lineNumber],lineNumber)
             codeGenerator.addUnite(empilerAd(ident, True))
-        else:
-            if(codeGenerator.isSymbolTypeBool(ident)):
-                raise AnaSynException(
-                    "Type mismatch. Did not expected : integer",lines[lineNumber],lineNumber)
+        else:            
             codeGenerator.addUnite(empiler(ident, True))
         codeGenerator.addUnite(get())
         logger.debug("Call to get "+ident)
@@ -635,7 +623,7 @@ def es(lexical_analyser):
         lexical_analyser.acceptKeyword("put")
         lexical_analyser.acceptCharacter("(")
         type = expression(lexical_analyser)
-        if(type != 'integer'):
+        if(type != primitives.INTEGER):
             raise AnaSynException(
                 "Type mismatch. Expected : integer got " + type,lines[lineNumber],lineNumber)
         lexical_analyser.acceptCharacter(")")
@@ -652,7 +640,7 @@ def boucle(lexical_analyser):
     lexical_analyser.acceptKeyword("while")
     ad1 = codeGenerator.getCO()
     type = expression(lexical_analyser)
-    if(type == 'integer'):
+    if(type != primitives.BOOLEAN):
         raise AnaSynException("Type mismatch. Expected : bool",lines[lineNumber],lineNumber)
     lexical_analyser.acceptKeyword("loop")
     tze1 = tze()
@@ -673,7 +661,7 @@ def altern(lexical_analyser):
     lexical_analyser.acceptKeyword("if")
 
     type = expression(lexical_analyser)
-    if(type == 'integer'):
+    if(type != primitives.BOOLEAN):
         raise AnaSynException("Type mismatch. Expected : bool",lines[lineNumber],lineNumber)
     jump = tze()
     codeGenerator.addUnite(jump)
@@ -699,7 +687,9 @@ def retour(lexical_analyser):
     global codeGenerator, lines, lineNumber
     logger.debug("parsing return instruction")
     lexical_analyser.acceptKeyword("return")
-    expression(lexical_analyser)
+    type = expression(lexical_analyser)
+    if(type != codeGenerator.operation.type):
+        raise AnaSynException("Type mismatch. Expected : %s but operation returned %s" %(codeGenerator.operation.type,type),lines[lineNumber],lineNumber)
     codeGenerator.addUnite(retourFonct())
 
 def displaySymboleTable(symboles,tab=0,parent=None):
