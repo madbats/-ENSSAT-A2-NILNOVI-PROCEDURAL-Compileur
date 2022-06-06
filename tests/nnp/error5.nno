@@ -1,0 +1,20 @@
+//----------------------------------------------------
+// Programme correct
+//
+// Appel d'une operations avec mauvais type de 
+// 
+//
+//> 7
+//> 14
+//------------------------------------------------------
+procedure pp is
+  procedure p(v : in integer; i : in out integer) is
+  begin
+    i := i + v
+  end;
+  a : boolean;
+begin
+  a := true;
+  p(2,a);   //mess. erreur attendu ici
+  put(a)
+end.

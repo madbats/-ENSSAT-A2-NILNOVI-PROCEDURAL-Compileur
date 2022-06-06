@@ -329,7 +329,14 @@ def instr(lexical_analyser):
             codeGenerator.addUnite(reserverBloc())
             nombre = 0
             if not lexical_analyser.isCharacter(")"):
-                nombre = listePe(lexical_analyser)
+                types = listePe(lexical_analyser)
+                nombre = len(types)
+                params = codeGenerator.getSymboleTable()[ident].params
+                for t,p,i in zip(types,params,range(0,len(params))):
+                    if t!=p.type:
+                        raise AnaSynException(
+                            "%s Expected a %s as its %d parameter but got a %s" % (str(ident), p.type,(i+1),t),lines[lineNumber],lineNumber)
+
             expected = codeGenerator.getSymboleTable()[ident].nombreParam()
             if(nombre != expected):
                 raise AnaSynException(
@@ -352,11 +359,13 @@ def instr(lexical_analyser):
 
 def listePe(lexical_analyser):
     global codeGenerator, lines, lineNumber
-    expression(lexical_analyser)
+    type = expression(lexical_analyser)
+    t = [type]
     if lexical_analyser.isCharacter(","):
         lexical_analyser.acceptCharacter(",")
-        return 1 + listePe(lexical_analyser)
-    return 1
+        t.extend(listePe(lexical_analyser))
+        return t
+    return t
 
 
 def expression(lexical_analyser):
@@ -545,7 +554,13 @@ def elemPrim(lexical_analyser):
             codeGenerator.addUnite(reserverBloc())
             nbParam = 0
             if not lexical_analyser.isCharacter(")"):
-                nbParam = listePe(lexical_analyser)
+                types = listePe(lexical_analyser)
+                nbParam = len(types)
+                params = codeGenerator.getSymboleTable()[ident].params
+                for t,p,i in zip(types,params,range(0,len(params))):
+                    if t!=p.type:
+                        raise AnaSynException(
+                            "%s Expected a %s as its %d parameter but got a %s" % (str(ident), p.type,(i+1),t),lines[lineNumber],lineNumber)
             expected = codeGenerator.getSymboleTable()[ident].nombreParam()
             if(nbParam != expected):
                 raise AnaSynException(
